@@ -54,3 +54,13 @@ class PlayerCar(AbstractCar):
     """
     IMG = RED_CAR
     START_POS = (430, 75)   # carro 1
+
+
+class GreenCar(AbstractCar):
+    """
+    Carro do jogador 2.
+
+    Usa a imagem verde e começa em uma posição específica da pista.
+    """
+    IMG = GREEN_CAR
+    START_POS = (520, 75)   # carro 2
