@@ -7,6 +7,7 @@ e colisão precisa com a borda da pista usando máscaras.
 
 import os
 import pygame
+import math
 from utils import scale_image, blit_rotate_center
 
 pygame.init()
@@ -108,7 +109,54 @@ class AbstractCar:
             self.x, self.y = old_x, old_y
             self.vel = 0  # Para o carro imediatamente ao bater
 
+    def move_backward(self):
+        """
+        Move o carro para trás.
 
+        Se o carro tocar na borda da pista, o movimento é desfeito
+        e a velocidade é zerada.
+        """
+        old_x, old_y = self.x, self.y
+        self.vel = max(self.vel - self.acceleration, -self.max_vel / 2)
+        self.move()
+
+        if self.collide(TRACK_BORDER_MASK) is not None:
+            self.x, self.y = old_x, old_y
+            self.vel = 0
+
+    def move(self):
+        """
+        Atualiza a posição do carro de acordo com seu ângulo e velocidade.
+
+        A matemática usa seno e cosseno para fazer o movimento seguir
+        a direção apontada pelo carro, como em um autorama real.
+        """
+        radians = math.radians(self.angle)
+        vertical = math.cos(radians) * self.vel
+        horizontal = math.sin(radians) * self.vel
+
+        self.y -= vertical
+        self.x -= horizontal
+
+    def reduce_speed(self):
+        """
+        Reduz gradualmente a velocidade do carro quando não há aceleração.
+
+        Isso simula a desaceleração natural do carrinho no autorama.
+        Se houver colisão durante esse deslocamento, o carro volta à posição anterior.
+        """
+        old_x, old_y = self.x, self.y
+
+        if self.vel > 0:
+            self.vel = max(self.vel - self.acceleration / 2, 0)
+        elif self.vel < 0:
+            self.vel = min(self.vel + self.acceleration / 2, 0)
+
+        self.move()
+
+        if self.collide(TRACK_BORDER_MASK) is not None:
+            self.x, self.y = old_x, old_y
+            self.vel = 0
 
 
 
