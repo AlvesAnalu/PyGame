@@ -65,8 +65,48 @@ class AbstractCar:
         """Desenha o carro na tela já considerando sua rotação atual."""
         blit_rotate_center(win, self.img, (self.x, self.y), self.angle)
 
+    def get_rotated_mask(self):
+        """
+        Retorna a máscara do carro na rotação atual e a imagem rotacionada.
 
+        Isso é importante para detectar colisão com a borda da pista de forma precisa.
+        """
+        rotated_image = pygame.transform.rotate(self.img, self.angle)
+        return pygame.mask.from_surface(rotated_image), rotated_image
 
+    def collide(self, mask, x=0, y=0):
+        """
+        Verifica se o carro colidiu com uma máscara fornecida.
+
+        No jogo, essa máscara representa a borda da pista, simulando
+        o limite físico do autorama.
+        """
+        car_mask, rotated_image = self.get_rotated_mask()
+
+        # Pega o retângulo do carro rotacionado para descobrir sua posição exata.
+        rotated_rect = rotated_image.get_rect(center=self.img.get_rect(topleft=(self.x, self.y)).center)
+
+        # Calcula o deslocamento entre a posição da máscara da pista e a posição do carro.
+        offset = (int(rotated_rect.left - x), int(rotated_rect.top - y))
+
+        # Se houver sobreposição, retorna um ponto de colisão; caso contrário, retorna None.
+        poi = mask.overlap(car_mask, offset)
+        return poi
+
+    def move_forward(self):
+        """
+        Move o carro para frente.
+
+        Se o carro tocar na borda da pista, o movimento é desfeito
+        e a velocidade é zerada.
+        """
+        old_x, old_y = self.x, self.y
+        self.vel = min(self.vel + self.acceleration, self.max_vel)
+        self.move()
+
+        if self.collide(TRACK_BORDER_MASK) is not None:
+            self.x, self.y = old_x, old_y
+            self.vel = 0  # Para o carro imediatamente ao bater
 
 
 
