@@ -29,3 +29,11 @@ WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Autorama 2 Jogadores")
 
 FPS = 60
+
+class AbstractCar:
+    """
+ self.vele baseself.img.get_heightm carro no autorama.
+
+    Centraliza a lógica de movimento, rotação, aceleração e colisão,
+    permitindo que diferentes carros compartilhem o mesmo comportamento.
+    """
