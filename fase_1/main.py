@@ -37,3 +37,20 @@ class AbstractCar:
     Centraliza a lógica de movimento, rotação, aceleração e colisão,
     permitindo que diferentes carros compartilhem o mesmo comportamento.
     """
+
+
+
+
+
+
+
+
+
+class PlayerCar(AbstractCar):
+    """
+    Carro do jogador 1.
+
+    Usa a imagem vermelha e começa em uma posição específica da pista.
+    """
+    IMG = RED_CAR
+    START_POS = (430, 75)   # carro 1
