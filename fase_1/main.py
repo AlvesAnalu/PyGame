@@ -219,3 +219,53 @@ def handle_controls(car, keys, left, right, up, down):
     # Se o jogador não estiver acelerando nem dando ré, o carro perde velocidade aos poucos.
     if not keys[up] and not keys[down]:
         car.reduce_speed()
+
+def main():
+    """
+    Função principal do jogo.
+
+    Cria os carros, controla o loop principal, verifica eventos,
+    lê o teclado e redesenha a tela continuamente.
+    """
+    clock = pygame.time.Clock()
+    run = True
+
+    car1 = PlayerCar(4, 4)
+    car2 = GreenCar(4, 4)
+
+    while run:
+        clock.tick(FPS)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+
+        keys = pygame.key.get_pressed()
+
+        # Carro 1: setas
+        handle_controls(
+            car1,
+            keys,
+            pygame.K_LEFT,
+            pygame.K_RIGHT,
+            pygame.K_UP,
+            pygame.K_DOWN
+        )
+
+        # Carro 2: WASD
+        handle_controls(
+            car2,
+            keys,
+            pygame.K_a,
+            pygame.K_d,
+            pygame.K_w,
+            pygame.K_s
+        )
+
+        draw(WIN, car1, car2)
+
+    pygame.quit()
+
+
+if _name_ == "_main_":
+    main()
