@@ -15,16 +15,16 @@ pygame.init()
 FILE_PATH = os.path.dirname(__file__)
 IMG_PATH = os.path.abspath(os.path.join(FILE_PATH, "..", "img"))
 
-GRASS = scale_image(pygame.image.load(os.path.join(IMG_PATH, "grass.jpg")), 2.5)
-TRACK = scale_image(pygame.image.load(os.path.join(IMG_PATH, "track.png")), 1)
+GRASS = scale_image(pygame.image.load(os.path.join(IMG_PATH, "gramado.png")), 2.5)
+TRACK = scale_image(pygame.image.load(os.path.join(IMG_PATH, "pista.png")), 1)
 
 # Imagem da borda da pista, usada para detectar colisões.
 # Ela deve ter o mesmo fator de escala da pista.
-TRACK_BORDER = scale_image(pygame.image.load(os.path.join(IMG_PATH, "track-border.png")), 1)
+TRACK_BORDER = scale_image(pygame.image.load(os.path.join(IMG_PATH, "contorno.png")), 1)
 TRACK_BORDER_MASK = pygame.mask.from_surface(TRACK_BORDER)
 
 RED_CAR = scale_image(pygame.image.load(os.path.join(IMG_PATH, "red-car.png")), 0.55)
-GREEN_CAR = scale_image(pygame.image.load(os.path.join(IMG_PATH, "green-car.png")), 0.55)
+GREEN_CAR = scale_image(pygame.image.load(os.path.join(IMG_PATH, "lfa.png")), 0.070)
 
 WIDTH, HEIGHT = TRACK.get_width(), TRACK.get_height()
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
