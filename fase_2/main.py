@@ -11,10 +11,11 @@ BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 IMG_PATH = os.path.join(BASE_PATH, "img")
 
 FPS = 60
+
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 DARK = (18, 18, 18)
-GRAY = (80, 80, 80)
+GRAY = (90, 90, 90)
 GREEN = (60, 180, 75)
 YELLOW = (255, 215, 0)
 
@@ -24,8 +25,6 @@ pygame.display.set_caption("Autorama - Fase 2")
 FONT_BIG = pygame.font.SysFont("arial", 54, bold=True)
 FONT_MED = pygame.font.SysFont("arial", 34, bold=True)
 FONT_SMALL = pygame.font.SysFont("arial", 24)
-
-TRACK_BORDER_MASK = None
 
 
 def load_image(filename: str, scale: float = 1.0, fallback: str | None = None) -> pygame.Surface:
@@ -39,111 +38,108 @@ def load_image(filename: str, scale: float = 1.0, fallback: str | None = None) -
 
 
 def load_assets():
-    grass = load_image("grass2.jpg", 2.5, fallback="grass.jpg")
-    track = load_image("track2.png", 1.0, fallback="track.png")
-    border = load_image("track2-border.png", 1.0, fallback="track-border.png")
-    red_car = load_image("red-car.png", 0.55)
-    green_car = load_image("green-car.png", 0.55)
+    grass = load_image("grass2.jpg", 2.5, fallback="gramado.png")
+    track = load_image("track2.png", 1.0, fallback="pista.png")
+    border = load_image("track2-border.png", 1.0, fallback="contorno.png")
+    red_car = load_image("mazda.png", 0.070, fallback="red-car.png")
+    green_car = load_image("lfa.png", 0.070, fallback="green-car.png")
     return grass, track, border, red_car, green_car
 
 
-class AbstractCar:
-    def __init__(self, image, start_pos, max_vel, rotation_vel):
+def pct(w: int, h: int, x: float, y: float) -> tuple[int, int]:
+    return int(w * x), int(h * y)
+
+
+def build_path(points: list[tuple[int, int]], density: int = 16) -> list[tuple[float, float]]:
+    path: list[tuple[float, float]] = []
+    for i in range(len(points)):
+        a = points[i]
+        b = points[(i + 1) % len(points)]
+        for step in range(density):
+            t = step / density
+            x = a[0] + (b[0] - a[0]) * t
+            y = a[1] + (b[1] - a[1]) * t
+            path.append((x, y))
+    return path
+
+
+def offset_path(path: list[tuple[float, float]], dx: float, dy: float) -> list[tuple[float, float]]:
+    return [(x + dx, y + dy) for x, y in path]
+
+
+class SlotCar:
+    def __init__(self, image: pygame.Surface, path: list[tuple[float, float]], max_vel: float = 4.0):
         self.img = image
+        self.path = path
         self.max_vel = max_vel
         self.vel = 0.0
-        self.rotation_vel = rotation_vel
+        self.acceleration = 0.08
         self.angle = 0.0
-        self.x, self.y = start_pos
-        self.acceleration = 0.1
+        self.path_index = 0
         self.laps = 0
-        self.inside_finish = False
+        self.locked = False
+        self.x, self.y = self.path[0]
 
-    def rotate(self, left=False, right=False):
-        if left:
-            self.angle += self.rotation_vel
-        elif right:
-            self.angle -= self.rotation_vel
+    def draw(self, win: pygame.Surface):
+        blit_rotate_center(win, self.img, (self.x, self.y), self.angle)
 
-    def draw(self, win):
-        return blit_rotate_center(win, self.img, (self.x, self.y), self.angle)
+    def rotate_to_next_point(self, next_x: float, next_y: float):
+        dx = next_x - self.x
+        dy = next_y - self.y
+        self.angle = -math.degrees(math.atan2(dy, dx)) + 90
 
-    def get_rotated_mask(self):
-        rotated_image = pygame.transform.rotate(self.img, self.angle)
-        return pygame.mask.from_surface(rotated_image), rotated_image
+    def move_along_path(self):
+        if self.locked or self.vel <= 0:
+            return
 
-    def collide(self, mask, x=0, y=0):
-        car_mask, rotated_image = self.get_rotated_mask()
-        rotated_rect = rotated_image.get_rect(center=self.img.get_rect(topleft=(self.x, self.y)).center)
-        offset = (int(rotated_rect.left - x), int(rotated_rect.top - y))
-        return mask.overlap(car_mask, offset)
+        next_index = self.path_index + 1
+        if next_index >= len(self.path):
+            next_index = 0
 
-    def move(self):
-        radians = math.radians(self.angle)
-        vertical = math.cos(radians) * self.vel
-        horizontal = math.sin(radians) * self.vel
-        self.y -= vertical
-        self.x -= horizontal
+        next_x, next_y = self.path[next_index]
+        dx = next_x - self.x
+        dy = next_y - self.y
+        dist = math.hypot(dx, dy)
 
-    def move_forward(self):
-        old_x, old_y = self.x, self.y
+        if dist <= self.vel:
+            self.x, self.y = next_x, next_y
+            self.path_index = next_index
+
+            if self.path_index == 0:
+                self.laps += 1
+                if self.laps >= 5:
+                    self.locked = True
+                    self.vel = 0.0
+                    return
+
+            next_index = self.path_index + 1
+            if next_index >= len(self.path):
+                next_index = 0
+            self.rotate_to_next_point(*self.path[next_index])
+        else:
+            self.rotate_to_next_point(next_x, next_y)
+            self.x += (dx / dist) * self.vel
+            self.y += (dy / dist) * self.vel
+
+    def accelerate(self):
+        if self.locked:
+            return
         self.vel = min(self.vel + self.acceleration, self.max_vel)
-        self.move()
-        if self.collide(TRACK_BORDER_MASK) is not None:
-            self.x, self.y = old_x, old_y
-            self.vel = 0
+        self.move_along_path()
 
-    def move_backward(self):
-        old_x, old_y = self.x, self.y
-        self.vel = max(self.vel - self.acceleration, -self.max_vel / 2)
-        self.move()
-        if self.collide(TRACK_BORDER_MASK) is not None:
-            self.x, self.y = old_x, old_y
-            self.vel = 0
-
-    def reduce_speed(self):
-        old_x, old_y = self.x, self.y
+    def brake(self):
+        if self.locked:
+            return
+        self.vel = max(self.vel - self.acceleration * 2, 0.0)
         if self.vel > 0:
-            self.vel = max(self.vel - self.acceleration / 2, 0)
-        elif self.vel < 0:
-            self.vel = min(self.vel + self.acceleration / 2, 0)
-        self.move()
-        if self.collide(TRACK_BORDER_MASK) is not None:
-            self.x, self.y = old_x, old_y
-            self.vel = 0
+            self.move_along_path()
 
-
-class PlayerCar(AbstractCar):
-    pass
-
-
-class GreenCar(AbstractCar):
-    pass
-
-
-def finish_zone_for_track(track):
-    width = track.get_width()
-    return pygame.Rect(max(0, width // 2 - 120), 35, 240, 90)
-
-
-def create_cars(red_car, green_car):
-    car1 = PlayerCar(red_car, (430, 75), 4, 4)
-    car2 = GreenCar(green_car, (520, 75), 4, 4)
-    return car1, car2
-
-
-def update_car(car, keys, forward_key, backward_key, left_key, right_key):
-    if keys[left_key]:
-        car.rotate(left=True)
-    if keys[right_key]:
-        car.rotate(right=True)
-
-    if keys[forward_key]:
-        car.move_forward()
-    elif keys[backward_key]:
-        car.move_backward()
-    else:
-        car.reduce_speed()
+    def coast(self):
+        if self.locked:
+            return
+        self.vel = max(self.vel - self.acceleration * 0.35, 0.0)
+        if self.vel > 0:
+            self.move_along_path()
 
 
 def center_text(surface, text, font, color, y):
@@ -152,7 +148,7 @@ def center_text(surface, text, font, color, y):
     surface.blit(rendered, rect)
 
 
-def show_message(title, lines):
+def show_message(title, lines, footer="Pressione ENTER para continuar"):
     clock = pygame.time.Clock()
     while True:
         clock.tick(FPS)
@@ -171,19 +167,52 @@ def show_message(title, lines):
             center_text(WIN, line, FONT_MED, WHITE, y)
             y += 50
 
-        center_text(WIN, "Pressione ENTER para continuar", FONT_SMALL, YELLOW, 520)
+        center_text(WIN, footer, FONT_SMALL, YELLOW, 520)
         pygame.display.update()
 
 
-def run_phase_2(player1_name, player2_name):
-    global WIN, TRACK_BORDER_MASK
+def make_control_points(track: pygame.Surface):
+    w, h = track.get_width(), track.get_height()
+
+    base = [
+        pct(w, h, 0.10, 0.05),
+        pct(w, h, 0.42, 0.05),
+        pct(w, h, 0.54, 0.17),
+        pct(w, h, 0.54, 0.36),
+        pct(w, h, 0.82, 0.36),
+        pct(w, h, 0.88, 0.50),
+        pct(w, h, 0.82, 0.66),
+        pct(w, h, 0.60, 0.66),
+        pct(w, h, 0.60, 0.83),
+        pct(w, h, 0.42, 0.92),
+        pct(w, h, 0.18, 0.85),
+        pct(w, h, 0.09, 0.66),
+        pct(w, h, 0.09, 0.38),
+        pct(w, h, 0.18, 0.20),
+    ]
+
+    path_1 = build_path(base, density=18)
+    path_2 = build_path(base, density=18)
+
+    path_1 = offset_path(path_1, -10, -8)
+    path_2 = offset_path(path_2, 10, 8)
+    return path_1, path_2
+
+
+def create_cars(red_car, green_car, path_1, path_2):
+    car1 = SlotCar(red_car, path_1, 4.2)
+    car2 = SlotCar(green_car, path_2, 4.2)
+    return car1, car2
+
+
+def run_phase_2(player1_name="Corredor 1", player2_name="Corredor 2"):
+    global WIN
 
     grass, track, border, red_car_img, green_car_img = load_assets()
     WIN = pygame.display.set_mode(track.get_size())
-    TRACK_BORDER_MASK = pygame.mask.from_surface(border)
-    finish_zone = finish_zone_for_track(track)
+    path_1, path_2 = make_control_points(track)
+    car1, car2 = create_cars(red_car_img, green_car_img, path_1, path_2)
 
-    car1, car2 = create_cars(red_car_img, green_car_img)
     clock = pygame.time.Clock()
     winner = None
 
@@ -196,34 +225,32 @@ def run_phase_2(player1_name, player2_name):
                 raise SystemExit
 
         keys = pygame.key.get_pressed()
-        update_car(car1, keys, pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d)
-        update_car(car2, keys, pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT)
 
-        temp_surface = pygame.Surface(track.get_size(), pygame.SRCALPHA)
-        rect1 = car1.draw(temp_surface)
-        rect2 = car2.draw(temp_surface)
+        if keys[pygame.K_w]:
+            car1.accelerate()
+        elif keys[pygame.K_s]:
+            car1.brake()
+        else:
+            car1.coast()
 
-        inside1 = finish_zone.colliderect(rect1)
-        inside2 = finish_zone.colliderect(rect2)
+        if keys[pygame.K_UP]:
+            car2.accelerate()
+        elif keys[pygame.K_DOWN]:
+            car2.brake()
+        else:
+            car2.coast()
 
-        if inside1 and not car1.inside_finish:
-            car1.laps += 1
-            if car1.laps >= 5 and winner is None:
-                winner = 1
-        car1.inside_finish = inside1
-
-        if inside2 and not car2.inside_finish:
-            car2.laps += 1
-            if car2.laps >= 5 and winner is None:
-                winner = 2
-        car2.inside_finish = inside2
+        if car1.laps >= 5 and winner is None:
+            winner = 1
+        if car2.laps >= 5 and winner is None:
+            winner = 2
 
         WIN.blit(grass, (0, 0))
         WIN.blit(track, (0, 0))
         WIN.blit(border, (0, 0))
-        WIN.blit(temp_surface, (0, 0))
 
-        pygame.draw.rect(WIN, YELLOW, finish_zone, 2)
+        car1.draw(WIN)
+        car2.draw(WIN)
 
         laps_1 = FONT_SMALL.render(f"{player1_name}: {car1.laps}/5", True, WHITE)
         laps_2 = FONT_SMALL.render(f"{player2_name}: {car2.laps}/5", True, WHITE)
@@ -237,27 +264,25 @@ def run_phase_2(player1_name, player2_name):
 
 
 def main():
-    player1_name = "Corredor 1"
-    player2_name = "Corredor 2"
-
     show_message(
         "FASE 2",
         [
-            "Essa é a segunda pista do jogo.",
-            f"{player1_name} vs {player2_name}",
-            "O primeiro a fazer 5 voltas vence.",
+            "Segunda pista do autorama.",
+            "O carro anda em um trilho fixo.",
+            "Quem fizer 5 voltas primeiro vence.",
         ],
     )
 
-    winner, laps1, laps2 = run_phase_2(player1_name, player2_name)
+    winner, laps1, laps2 = run_phase_2()
 
     show_message(
         "Resultado da Fase 2",
         [
             f"Vencedor: {'Carro vermelho' if winner == 1 else 'Carro verde'}",
-            f"{player1_name}: {laps1} voltas",
-            f"{player2_name}: {laps2} voltas",
+            f"Voltas do carro vermelho: {laps1}",
+            f"Voltas do carro verde: {laps2}",
         ],
+        footer="Pressione ENTER para sair",
     )
 
     pygame.quit()
