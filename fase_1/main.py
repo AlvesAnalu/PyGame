@@ -1,17 +1,24 @@
+import importlib.util
 import math
 import os
+import sys
 import pygame
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(CURRENT_DIR)
+PHASE2_DIR = os.path.join(ROOT_DIR, "fase_2")
+
+if CURRENT_DIR not in sys.path:
+    sys.path.insert(0, CURRENT_DIR)
 
 from utils import scale_image, blit_rotate_center
 
 pygame.init()
 pygame.font.init()
 
-BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-IMG_PATH = os.path.join(BASE_PATH, "img")
+IMG_PATH = os.path.join(ROOT_DIR, "img")
 
 FPS = 60
-
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 DARK = (18, 18, 18)
@@ -21,7 +28,6 @@ RED = (220, 50, 50)
 YELLOW = (255, 215, 0)
 CYAN = (80, 200, 255)
 
-TRACK_BORDER_MASK = None
 WIN = pygame.display.set_mode((900, 600))
 pygame.display.set_caption("Autorama 2 Jogadores")
 
@@ -40,7 +46,7 @@ def load_image(filename: str, scale: float = 1.0, fallback: str | None = None) -
     return scale_image(image, scale)
 
 
-def load_level_assets(level: int):
+def load_assets(level: int):
     if level == 2:
         grass = load_image("grass2.jpg", 2.5, fallback="gramado.png")
         track = load_image("track2.png", 1.0, fallback="pista.png")
@@ -59,7 +65,7 @@ def pct(w: int, h: int, x: float, y: float) -> tuple[int, int]:
     return int(w * x), int(h * y)
 
 
-def build_path(points: list[tuple[int, int]], density: int = 16) -> list[tuple[float, float]]:
+def build_path(points: list[tuple[int, int]], density: int = 18) -> list[tuple[float, float]]:
     path: list[tuple[float, float]] = []
     for i in range(len(points)):
         a = points[i]
@@ -72,12 +78,89 @@ def build_path(points: list[tuple[int, int]], density: int = 16) -> list[tuple[f
     return path
 
 
-def offset_path(path: list[tuple[float, float]], dx: float, dy: float) -> list[tuple[float, float]]:
-    return [(x + dx, y + dy) for x, y in path]
+def normalize(x: float, y: float) -> tuple[float, float]:
+    dist = math.hypot(x, y)
+    if dist == 0:
+        return 0.0, 0.0
+    return x / dist, y / dist
+
+
+def offset_closed_polyline(points: list[tuple[int, int]], offset: float) -> list[tuple[int, int]]:
+    result: list[tuple[int, int]] = []
+    n = len(points)
+
+    for i in range(n):
+        x, y = points[i]
+        px, py = points[i - 1]
+        nx, ny = points[(i + 1) % n]
+
+        v1x, v1y = normalize(x - px, y - py)
+        v2x, v2y = normalize(nx - x, ny - y)
+
+        n1x, n1y = -v1y, v1x
+        n2x, n2y = -v2y, v2x
+
+        ox, oy = normalize(n1x + n2x, n1y + n2y)
+        if ox == 0 and oy == 0:
+            ox, oy = n1x, n1y
+            if ox == 0 and oy == 0:
+                ox, oy = n2x, n2y
+
+        result.append((int(x + ox * offset), int(y + oy * offset)))
+
+    return result
+
+
+def centerline_points(level: int, track: pygame.Surface) -> list[tuple[int, int]]:
+    w, h = track.get_width(), track.get_height()
+
+    if level == 2:
+        raw = [
+            (0.12, 0.06),
+            (0.42, 0.06),
+            (0.54, 0.16),
+            (0.54, 0.34),
+            (0.80, 0.34),
+            (0.88, 0.50),
+            (0.81, 0.66),
+            (0.60, 0.66),
+            (0.60, 0.83),
+            (0.43, 0.91),
+            (0.18, 0.84),
+            (0.09, 0.66),
+            (0.09, 0.38),
+            (0.18, 0.20),
+        ]
+    else:
+        raw = [
+            (0.10, 0.05),
+            (0.42, 0.05),
+            (0.54, 0.17),
+            (0.54, 0.36),
+            (0.82, 0.36),
+            (0.88, 0.50),
+            (0.82, 0.66),
+            (0.60, 0.66),
+            (0.60, 0.83),
+            (0.42, 0.92),
+            (0.18, 0.85),
+            (0.09, 0.66),
+            (0.09, 0.38),
+            (0.18, 0.20),
+        ]
+
+    return [pct(w, h, x, y) for x, y in raw]
+
+
+def build_lane_paths(track: pygame.Surface, level: int, lane_offset: int = 16):
+    center = centerline_points(level, track)
+    left_lane = build_path(offset_closed_polyline(center, -lane_offset), density=18)
+    right_lane = build_path(offset_closed_polyline(center, lane_offset), density=18)
+    return left_lane, right_lane
 
 
 class SlotCar:
-    def __init__(self, image: pygame.Surface, path: list[tuple[float, float]], max_vel: float = 4.0):
+    def __init__(self, image: pygame.Surface, path: list[tuple[float, float]], max_vel: float = 4.2):
         self.img = image
         self.path = path
         self.max_vel = max_vel
@@ -87,69 +170,75 @@ class SlotCar:
         self.path_index = 0
         self.laps = 0
         self.locked = False
-
         self.x, self.y = self.path[0]
+        self.sync_angle()
+
+    def sync_angle(self):
+        if len(self.path) > 1:
+            nx, ny = self.path[1]
+            self.angle = -math.degrees(math.atan2(ny - self.y, nx - self.x)) + 90
 
     def draw(self, win: pygame.Surface):
         blit_rotate_center(win, self.img, (self.x, self.y), self.angle)
 
-    def rotate_to_next_point(self, next_x: float, next_y: float):
-        dx = next_x - self.x
-        dy = next_y - self.y
-        self.angle = -math.degrees(math.atan2(dy, dx)) + 90
+    def advance(self, distance: float):
+        remaining = distance
 
-    def move_along_path(self):
-        if self.locked or self.vel <= 0:
-            return
+        while remaining > 0 and not self.locked:
+            next_index = (self.path_index + 1) % len(self.path)
+            next_x, next_y = self.path[next_index]
 
-        next_index = self.path_index + 1
-        if next_index >= len(self.path):
-            next_index = 0
+            dx = next_x - self.x
+            dy = next_y - self.y
+            dist = math.hypot(dx, dy)
 
-        next_x, next_y = self.path[next_index]
-        dx = next_x - self.x
-        dy = next_y - self.y
-        dist = math.hypot(dx, dy)
+            if dist < 0.001:
+                self.x, self.y = next_x, next_y
+                self.path_index = next_index
+                if self.path_index == 0:
+                    self.laps += 1
+                    if self.laps >= 5:
+                        self.locked = True
+                        self.vel = 0.0
+                        return
+                continue
 
-        if dist <= self.vel:
-            self.x, self.y = next_x, next_y
-            self.path_index = next_index
+            step = min(remaining, dist)
+            self.angle = -math.degrees(math.atan2(dy, dx)) + 90
+            self.x += (dx / dist) * step
+            self.y += (dy / dist) * step
+            remaining -= step
 
-            if self.path_index == 0:
-                self.laps += 1
-                if self.laps >= 5:
-                    self.locked = True
-                    self.vel = 0.0
-                    return
-
-            next_index = self.path_index + 1
-            if next_index >= len(self.path):
-                next_index = 0
-            self.rotate_to_next_point(*self.path[next_index])
-        else:
-            self.rotate_to_next_point(next_x, next_y)
-            self.x += (dx / dist) * self.vel
-            self.y += (dy / dist) * self.vel
+            if step >= dist - 0.001:
+                self.path_index = next_index
+                if self.path_index == 0:
+                    self.laps += 1
+                    if self.laps >= 5:
+                        self.locked = True
+                        self.vel = 0.0
+                        return
+            else:
+                break
 
     def accelerate(self):
         if self.locked:
             return
         self.vel = min(self.vel + self.acceleration, self.max_vel)
-        self.move_along_path()
+        self.advance(self.vel)
 
     def brake(self):
         if self.locked:
             return
         self.vel = max(self.vel - self.acceleration * 2, 0.0)
         if self.vel > 0:
-            self.move_along_path()
+            self.advance(self.vel)
 
     def coast(self):
         if self.locked:
             return
         self.vel = max(self.vel - self.acceleration * 0.35, 0.0)
         if self.vel > 0:
-            self.move_along_path()
+            self.advance(self.vel)
 
 
 def center_text(surface, text, font, color, y):
@@ -179,10 +268,11 @@ def start_screen():
 
         WIN.fill(DARK)
         center_text(WIN, "AUTORAMA 2 JOGADORES", FONT_BIG, WHITE, 110)
-        center_text(WIN, "P1: W acelera / S freia", FONT_MED, YELLOW, 220)
-        center_text(WIN, "P2: UP acelera / DOWN freia", FONT_MED, YELLOW, 270)
-        center_text(WIN, "Cada fase termina em 5 voltas", FONT_SMALL, WHITE, 330)
-        center_text(WIN, "Pressione ENTER para começar", FONT_MED, GREEN, 420)
+        center_text(WIN, "O carro segue uma faixa fixa da pista", FONT_MED, YELLOW, 220)
+        center_text(WIN, "P1: W acelera / S freia", FONT_MED, WHITE, 280)
+        center_text(WIN, "P2: UP acelera / DOWN freia", FONT_MED, WHITE, 330)
+        center_text(WIN, "Cada fase termina com 5 voltas", FONT_SMALL, WHITE, 390)
+        center_text(WIN, "Pressione ENTER para começar", FONT_MED, GREEN, 470)
         pygame.display.update()
 
 
@@ -269,68 +359,16 @@ def show_message_screen(title, lines, footer="Pressione ENTER para continuar"):
         pygame.display.update()
 
 
-def make_control_points(track: pygame.Surface, level: int):
-    w, h = track.get_width(), track.get_height()
-
-    if level == 2:
-        base = [
-            pct(w, h, 0.10, 0.05),
-            pct(w, h, 0.42, 0.05),
-            pct(w, h, 0.54, 0.17),
-            pct(w, h, 0.54, 0.36),
-            pct(w, h, 0.82, 0.36),
-            pct(w, h, 0.88, 0.50),
-            pct(w, h, 0.82, 0.66),
-            pct(w, h, 0.60, 0.66),
-            pct(w, h, 0.60, 0.83),
-            pct(w, h, 0.42, 0.92),
-            pct(w, h, 0.18, 0.85),
-            pct(w, h, 0.09, 0.66),
-            pct(w, h, 0.09, 0.38),
-            pct(w, h, 0.18, 0.20),
-        ]
-    else:
-        base = [
-            pct(w, h, 0.08, 0.05),
-            pct(w, h, 0.42, 0.05),
-            pct(w, h, 0.55, 0.12),
-            pct(w, h, 0.55, 0.30),
-            pct(w, h, 0.75, 0.30),
-            pct(w, h, 0.84, 0.45),
-            pct(w, h, 0.79, 0.63),
-            pct(w, h, 0.60, 0.63),
-            pct(w, h, 0.60, 0.84),
-            pct(w, h, 0.40, 0.92),
-            pct(w, h, 0.16, 0.84),
-            pct(w, h, 0.06, 0.63),
-            pct(w, h, 0.06, 0.38),
-            pct(w, h, 0.16, 0.18),
-        ]
-
-    path_1 = build_path(base, density=18)
-    path_2 = build_path(base, density=18)
-
-    path_1 = offset_path(path_1, -10, -8)
-    path_2 = offset_path(path_2, 10, 8)
-
-    return path_1, path_2
-
-
-def create_cars(red_car: pygame.Surface, green_car: pygame.Surface, path_1, path_2):
-    car1 = SlotCar(red_car, path_1, max_vel=4.2)
-    car2 = SlotCar(green_car, path_2, max_vel=4.2)
-    return car1, car2
-
-
 def run_phase(level: int, player1_name: str, player2_name: str):
     global WIN
 
-    grass, track, border, red_car_img, green_car_img = load_level_assets(level)
+    grass, track, border, red_car_img, green_car_img = load_assets(level)
     WIN = pygame.display.set_mode(track.get_size())
-    finish_zone = pygame.Rect(track.get_width() // 2 - 90, 20, 180, 80)
 
-    path_1, path_2 = make_control_points(track, level)
-    car1, car2 = create_cars(red_car_img, green_car_img, path_1, path_2)
+    lane_left, lane_right = build_lane_paths(track, level)
+
+    car1 = SlotCar(red_car_img, lane_left)
+    car2 = SlotCar(green_car_img, lane_right)
 
     clock = pygame.time.Clock()
     winner = None
@@ -367,7 +405,6 @@ def run_phase(level: int, player1_name: str, player2_name: str):
         WIN.blit(grass, (0, 0))
         WIN.blit(track, (0, 0))
         WIN.blit(border, (0, 0))
-        pygame.draw.rect(WIN, YELLOW, finish_zone, 2)
 
         car1.draw(WIN)
         car2.draw(WIN)
@@ -384,6 +421,18 @@ def run_phase(level: int, player1_name: str, player2_name: str):
 
         if winner is not None:
             return winner, car1.laps, car2.laps
+
+
+def load_phase2_module():
+    phase2_path = os.path.join(PHASE2_DIR, "main.py")
+    spec = importlib.util.spec_from_file_location("fase2_main_module", phase2_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Não foi possível carregar fase_2/main.py")
+
+    module = importlib.util.module_from_spec(spec)
+    sys.path.insert(0, PHASE2_DIR)
+    spec.loader.exec_module(module)
+    return module
 
 
 def show_phase_result(phase, winner_id, player1_name, player2_name, laps_1, laps_2):
@@ -427,7 +476,17 @@ def main():
     phase1_winner, laps1_p1, laps1_p2 = run_phase(1, player1_name, player2_name)
     show_phase_result(1, phase1_winner, player1_name, player2_name, laps1_p1, laps1_p2)
 
-    phase2_winner, laps2_p1, laps2_p2 = run_phase(2, player1_name, player2_name)
+    show_message_screen(
+        "FASE 2",
+        [
+            "Agora a segunda pista vai começar.",
+            "Os carrinhos continuam na própria faixa.",
+            "Quem fizer 5 voltas primeiro vence.",
+        ],
+    )
+
+    phase2_module = load_phase2_module()
+    phase2_winner, laps2_p1, laps2_p2 = phase2_module.run_phase_2(player1_name, player2_name)
     show_phase_result(2, phase2_winner, player1_name, player2_name, laps2_p1, laps2_p2)
 
     show_final_screen(phase1_winner, phase2_winner, player1_name, player2_name)
