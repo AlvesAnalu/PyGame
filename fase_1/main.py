@@ -39,6 +39,7 @@ FONT_SMALL = pygame.font.SysFont("arial", 24)
 
 FPS = 60
 WHITE = (255, 255, 255)
+RED = (255, 0, 0)
 BLACK = (0, 0, 0)
 YELLOW = (255, 221, 0)
 GREEN = (0, 200, 0)
@@ -356,27 +357,36 @@ def draw_button(surface, rect, text, active=False):
     label = FONT_SMALL.render(text, True, BLACK)
     surface.blit(label, label.get_rect(center=rect.center))
 
-
 def start_screen():
-    clock = pygame.time.Clock()
+    clock= pygame.time.Clock()
+    fundo_fase1= pygame.image.load(os.path.join(IMG_PATH, "fase1.png"))
+    fundo_fase1= pygame.transform.scale(fundo_fase1, (WIDTH, HEIGHT))
+    largura_botao= 340
+    altura_botao= 75
+    x_botao = (WIDTH - largura_botao) // 2
+    y_botao = 485
+
+    retangulo_iniciar = pygame.Rect(x_botao, y_botao, largura_botao, altura_botao)
+
     while True:
         clock.tick(FPS)
+        WIN.blit(fundo_fase1, (0, 0))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 raise SystemExit
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                return
-
-        WIN.fill(DARK)
-        center_text(WIN, "AUTORAMA 2 JOGADORES", FONT_BIG, WHITE, 110)
-        center_text(WIN, "Cada carro tem sua faixa exclusiva", FONT_MED, YELLOW, 220)
-        center_text(WIN, "P1: W acelera / S freia", FONT_MED, WHITE, 280)
-        center_text(WIN, "P2: UP acelera / DOWN freia", FONT_MED, WHITE, 330)
-        center_text(WIN, "Cada fase termina com 5 voltas", FONT_SMALL, WHITE, 390)
-        center_text(WIN, "Pressione ENTER para começar", FONT_MED, GREEN, 470)
+            
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
+                    return
+                
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    posicao_mouse = event.pos
+                    if retangulo_iniciar.collidepoint(posicao_mouse):
+                        return 
+                        
         pygame.display.update()
-
 
 def ask_player_names():
     clock = pygame.time.Clock()
