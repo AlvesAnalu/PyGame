@@ -483,7 +483,7 @@ def ask_player_names():
                     active = 1
                 elif box2.collidepoint(pos_mouse):
                     active = 2
-                elif retangulo_confirmar.collidepoint(pos_mouse):
+                elif retangulo_iniciar.collidepoint(pos_mouse):
                     return name1.strip() or "Player 1", name2.strip() or "Player 2"
 
         WIN.blit(fundo_nomes, (0, 0))
