@@ -436,8 +436,21 @@ def ask_player_names():
     name2 = ""
     active = 1
 
-    box1 = pygame.Rect(120, 220, 560, 60)
-    box2 = pygame.Rect(120, 330, 560, 60)
+    fundo_nomes = pygame.image.load(os.path.join(IMG_PATH, "nome-jogadores.png"))
+    fundo_nomes = pygame.transform.scale(fundo_nomes, (WIDTH, HEIGHT))
+    
+    largura_caixa = 550
+    altura_caixa = 52
+    x_caixas = (WIDTH - largura_caixa) // 2
+
+    box1 = pygame.Rect(x_caixas, 390, largura_caixa, altura_caixa)
+    box2 = pygame.Rect(x_caixas, 565, largura_caixa, altura_caixa)
+
+    largura_botao = 340
+    altura_botao = 75
+    x_botao = (WIDTH - largura_botao) // 2
+
+    retangulo_iniciar = pygame.Rect(x_botao, 805, largura_botao, altura_botao)
 
     while True:
         clock.tick(FPS)
@@ -450,8 +463,8 @@ def ask_player_names():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_TAB:
                     active = 2 if active == 1 else 1
-                elif event.key == pygame.K_RETURN:
-                    return name1.strip() or "Corredor 1", name2.strip() or "Corredor 2"
+                elif event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
+                    return name1.strip() or "Player 1", name2.strip() or "Player 2"
                 elif event.key == pygame.K_BACKSPACE:
                     if active == 1:
                         name1 = name1[:-1]
@@ -464,29 +477,23 @@ def ask_player_names():
                         elif active == 2 and len(name2) < 16:
                             name2 += event.unicode
 
-        WIN.fill(DARK)
-        center_text(WIN, "Digite o nome dos corredores", FONT_BIG, WHITE, 110)
-        center_text(WIN, "TAB troca de campo | ENTER confirma", FONT_SMALL, YELLOW, 170)
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                pos_mouse = event.pos
+                if box1.collidepoint(pos_mouse):
+                    active = 1
+                elif box2.collidepoint(pos_mouse):
+                    active = 2
+                elif retangulo_confirmar.collidepoint(pos_mouse):
+                    return name1.strip() or "Player 1", name2.strip() or "Player 2"
 
-        label1 = FONT_SMALL.render("Carro vermelho:", True, WHITE)
-        label2 = FONT_SMALL.render("Carro verde:", True, WHITE)
-        WIN.blit(label1, (120, 190))
-        WIN.blit(label2, (120, 300))
+        WIN.blit(fundo_nomes, (0, 0))
 
-        pygame.draw.rect(WIN, WHITE, box1, 2, border_radius=12)
-        pygame.draw.rect(WIN, WHITE, box2, 2, border_radius=12)
+        text1 = FONT_MED.render(name1 or "Digite o nome...", True, (200, 200, 200) if not name1 else WHITE)
+        text2 = FONT_MED.render(name2 or "Digite o nome...", True, (200, 200, 200) if not name2 else WHITE)
+        
+        WIN.blit(text1, (box1.x + 20, box1.y + (box1.height - text1.get_height()) // 2))
+        WIN.blit(text2, (box2.x + 20, box2.y + (box2.height - text2.get_height()) // 2))
 
-        if active == 1:
-            pygame.draw.rect(WIN, GREEN, box1, 4, border_radius=12)
-        else:
-            pygame.draw.rect(WIN, GREEN, box2, 4, border_radius=12)
-
-        text1 = FONT_MED.render(name1 or "...", True, WHITE)
-        text2 = FONT_MED.render(name2 or "...", True, WHITE)
-        WIN.blit(text1, (140, 230))
-        WIN.blit(text2, (140, 340))
-
-        draw_button(WIN, pygame.Rect(120, 430, 220, 52), "ENTER para confirmar", True)
         pygame.display.update()
 
 
