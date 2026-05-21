@@ -274,8 +274,8 @@ class SlotCar:
         # ==========================================
         # NOVAS VARIÁVEIS DE PUNIÇÃO (DESCARRILAR)
         # ==========================================
-        self.max_vel = 6.0         # Velocidade máxima alcançável
-        self.derail_vel = 4.3      # Limite seguro! Passou disso, ele quebra.
+        self.max_vel = 10.0         # Velocidade máxima alcançável
+        self.derail_vel = 8.0     # Limite seguro! Passou disso, ele quebra.
         self.crashed = False       # Estado: o carro está quebrado?
         self.crash_timer = 0       # Cronômetro da punição
         self.PENALTY_FRAMES = 90   # 90 frames = 1.5 segundos parado (a 60 FPS)
