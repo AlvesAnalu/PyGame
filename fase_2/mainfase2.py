@@ -382,7 +382,6 @@ def run_phase_2(player1_name: str, player2_name: str):
 
         WIN.blit(grass, (0, 0))
         WIN.blit(track, (0, 0))
-        WIN.blit(border, (0, 0))
 
         if DEBUG_PATHS:
             if len(center_path) > 1:
