@@ -42,12 +42,15 @@ def load_image(filename: str, scale: float = 1.0, fallback: str | None = None) -
     return scale_image(image, scale)
 
 
-def load_assets():
+def load_assets(
+    player1_car: str = "mazda.png",
+    player2_car: str = "lfa.png",
+):
     grass = load_image("grass2.jpg", 2.5, fallback="gramado.png")
     track = load_image("track2.png", 1.0, fallback="pista.png")
     border = load_image("track2-border.png", 1.0, fallback="contorno.png")
-    red_car = load_image("mazda.png", 0.070, fallback="red-car.png")
-    green_car = load_image("lfa.png", 0.070, fallback="green-car.png")
+    red_car = load_image(player1_car, 0.070, fallback="mazda.png")
+    green_car = load_image(player2_car, 0.070, fallback="lfa.png")
     return grass, track, border, red_car, green_car
 
 
@@ -242,10 +245,18 @@ def show_message(title, lines, footer="Pressione ENTER para continuar"):
         pygame.display.update()
 
 
-def run_phase_2(player1_name="Corredor 1", player2_name="Corredor 2"):
+def run_phase_2(
+    player1_name="Corredor 1",
+    player2_name="Corredor 2",
+    player1_car: str = "mazda.png",
+    player2_car: str = "lfa.png",
+):
     global WIN
 
-    grass, track, border, red_car_img, green_car_img = load_assets()
+    grass, track, border, red_car_img, green_car_img = load_assets(
+    player1_car,
+    player2_car
+)
     WIN = pygame.display.set_mode((1600, 1000))
     grass, track, border, red_car_img, green_car_img = load_assets()
     

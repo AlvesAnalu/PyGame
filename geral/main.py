@@ -226,11 +226,16 @@ def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, volta
 
 def main_geral():
     tela_capa_jogo()
+
+    # tela de escolha dos carros
+    car1_sprite, car2_sprite = tela_escolha_carros()
+
+    # nomes dos jogadores
     player1_name, player2_name = fase1_module.ask_player_names()
 
-    # Fase 1
+    # fase 1
     phase1_winner, laps1_p1, laps1_p2 = fase1_module.run_phase(
-        1, player1_name, player2_name
+        1, player1_name, player2_name, car1_sprite, car2_sprite
     )
     chamar_resultado_modulo(
         fase1_module,
@@ -242,9 +247,9 @@ def main_geral():
         laps1_p2,
     )
 
-    # Fase 2
+    # fase 2
     phase2_winner, laps2_p1, laps2_p2 = fase2_module.run_phase_2(
-        player1_name, player2_name
+        player1_name, player2_name, car1_sprite, car2_sprite
     )
     chamar_resultado_modulo(
         fase2_module,
@@ -258,7 +263,6 @@ def main_geral():
 
     pygame.quit()
     sys.exit()
-
 
 if __name__ == "__main__":
     main_geral()

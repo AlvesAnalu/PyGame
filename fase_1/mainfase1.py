@@ -62,7 +62,11 @@ def load_image(filename: str, scale: float = 1.0, fallback: str | None = None) -
     return scale_image(image, scale)
 
 
-def load_assets(level: int):
+def load_assets(
+    level: int,
+    player1_car: str = "mazda.png",
+    player2_car: str = "lfa.png",
+):
     if level == 2:
         grass = load_image("grass2.jpg", 2.5, fallback="gramado.png")
         track = load_image("track2.png", 1.0, fallback="pista.png")
@@ -72,8 +76,8 @@ def load_assets(level: int):
         track = load_image("pista.png", 1.0, fallback="track.png")
         border = load_image("contorno.png", 1.0, fallback="track-border.png")
 
-    red_car = load_image("mazda.png", 0.070, fallback="red-car.png")
-    green_car = load_image("lfa.png", 0.070, fallback="green-car.png")
+    red_car = load_image(player1_car, 0.070, fallback="mazda.png")
+    green_car = load_image(player2_car, 0.070, fallback="lfa.png")
     return grass, track, border, red_car, green_car
 
 
@@ -520,12 +524,22 @@ def show_message_screen(title, lines, footer="Pressione ENTER para continuar"):
         pygame.display.update()
 
 
-def run_phase(level: int, player1_name: str, player2_name: str):
+def run_phase(
+    level: int,
+    player1_name: str,
+    player2_name: str,
+    player1_car: str = "mazda.png",
+    player2_car: str = "lfa.png",
+):
     global WIN
 
     DEBUG_PATHS = True # <--- Deixe True para ver as linhas invisíveis
 
-    grass, track, border, red_car_img, green_car_img = load_assets(level)
+    grass, track, border, red_car_img, green_car_img = load_assets(
+    level,
+    player1_car,
+    player2_car
+)
 # Mantenha o tamanho fixo definido no menu geral para evitar que a tela encolha ou corte
     WIN = pygame.display.set_mode((1600, 1000))
     # Aumentado para 35 pixels de distância do centro para evitar colisões
