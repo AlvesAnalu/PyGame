@@ -45,8 +45,8 @@ def load_phase2_assets():
     grass = load_image("grass2.jpg", 2.5, fallback="gramado.png")
     track = load_image("pista2.png", 1.0)
     border = load_image("contorno2.png", 1.0, fallback="contorno.png")
-    red_car = load_image("mazda.png", 0.070, fallback="red-car.png")
-    green_car = load_image("lfa.png", 0.070, fallback="green-car.png")
+    red_car = load_image("mazda.png", 0.050, fallback="red-car.png")
+    green_car = load_image("lfa.png", 0.050, fallback="green-car.png")
     return grass, track, border, red_car, green_car
 
 def pct(w: int, h: int, x: float, y: float) -> tuple[int, int]:
@@ -358,7 +358,7 @@ def run_phase_2(player1_name: str, player2_name: str):
         WIN = pygame.display.set_mode(track.get_size())
 
     # Distância das faixas. Ajuste se as faixas saírem do asfalto
-    lane_offset = 28
+    lane_offset = 16
 
     lane_left, lane_right, center_raw = build_lane_paths_phase2(track, lane_offset)
     center_path = build_path(center_raw, density=18)
