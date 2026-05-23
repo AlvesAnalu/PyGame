@@ -26,6 +26,7 @@ BLACK = (0, 0, 0)
 YELLOW = (255, 221, 0)
 GREEN = (0, 200, 0)
 CYAN = (0, 200, 200)
+TOTAL_VOLTAS = 2
 AJUSTE_ANGULO = 90
 
 FONT_SMALL = pygame.font.SysFont("arial", 24)
@@ -298,7 +299,7 @@ class SlotCarPhase2:
                 self.path_index = next_index
                 if self.path_index == 0:
                     self.laps += 1
-                    if self.laps >= 5:
+                    if self.laps >= TOTAL_VOLTAS:
                         self.locked = True; self.vel = 0.0; return
                 continue
 
@@ -387,8 +388,8 @@ def run_phase_2(player1_name: str, player2_name: str):
         elif keys[pygame.K_DOWN]: car2.brake()
         else: car2.coast()
 
-        if car1.laps >= 5 and winner is None: winner = 1
-        if car2.laps >= 5 and winner is None: winner = 2
+        if car1.laps >= TOTAL_VOLTAS and winner is None: winner = 1
+        if car2.laps >= TOTAL_VOLTAS and winner is None: winner = 2
 
         WIN.blit(grass, (0, 0))
         WIN.blit(track, (0, 0))
@@ -404,8 +405,8 @@ def run_phase_2(player1_name: str, player2_name: str):
         car1.draw(WIN)
         car2.draw(WIN)
 
-        laps_1 = FONT_SMALL.render(f"{player1_name}: {car1.laps}/5", True, WHITE)
-        laps_2 = FONT_SMALL.render(f"{player2_name}: {car2.laps}/5", True, WHITE)
+        laps_1 = FONT_SMALL.render(f"{player1_name}: {car1.laps}/{TOTAL_VOLTAS}", True, WHITE)
+        laps_2 = FONT_SMALL.render(f"{player2_name}: {car2.laps}/{TOTAL_VOLTAS}", True, WHITE)
         phase_label = FONT_SMALL.render("Fase 2", True, CYAN)
 
         WIN.blit(laps_1, (20, 18))
