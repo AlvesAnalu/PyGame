@@ -246,8 +246,14 @@ def run_phase_2(player1_name="Corredor 1", player2_name="Corredor 2"):
     global WIN
 
     grass, track, border, red_car_img, green_car_img = load_assets()
-    WIN = pygame.display.set_mode(track.get_size())
-
+    WIN = pygame.display.set_mode((1600, 1000))
+    grass, track, border, red_car_img, green_car_img = load_assets()
+    
+    # Redimensiona os backgrounds para caber na tela cheia sem cortar
+    grass = pygame.transform.scale(grass, (1600, 1000))
+    track = pygame.transform.scale(track, (1600, 1000))
+    border = pygame.transform.scale(border, (1600, 1000))
+    
     lane_left, lane_right = build_lane_paths(track)
 
     car1 = SlotCar(red_car_img, lane_left)

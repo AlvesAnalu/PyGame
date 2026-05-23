@@ -526,11 +526,14 @@ def run_phase(level: int, player1_name: str, player2_name: str):
     DEBUG_PATHS = True # <--- Deixe True para ver as linhas invisíveis
 
     grass, track, border, red_car_img, green_car_img = load_assets(level)
-    WIN = pygame.display.set_mode(track.get_size())
-
+# Mantenha o tamanho fixo definido no menu geral para evitar que a tela encolha ou corte
+    WIN = pygame.display.set_mode((1600, 1000))
     # Aumentado para 35 pixels de distância do centro para evitar colisões
     lane_offset = 22
-
+    # Dentro de run_phase, após carregar os assets:
+    grass = pygame.transform.scale(grass, (1600, 1000))
+    track = pygame.transform.scale(track, (1600, 1000))
+    border = pygame.transform.scale(border, (1600, 1000))
     # Gerando os caminhos
     center_raw_points = centerline_points(level, track)
     lane_left, lane_right = build_lane_paths(track, level, lane_offset)
