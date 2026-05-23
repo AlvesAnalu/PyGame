@@ -47,6 +47,7 @@ GREEN = (0, 200, 0)
 GRAY = (100, 100, 100)
 CYAN = (0, 200, 200)
 DARK = (20, 20, 20)
+TOTAL_VOLTAS = 3
 
 # Ajuste de ângulo para correção da orientação das sprites
 AJUSTE_ANGULO = 90
@@ -340,7 +341,7 @@ class SlotCar:
                 self.path_index = next_index
                 if self.path_index == 0:
                     self.laps += 1
-                    if self.laps >= 5:
+                    if self.laps >= TOTAL_VOLTAS:
                         self.locked = True; self.vel = 0.0; return
                 continue
 
@@ -421,17 +422,17 @@ def start_screen():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 raise SystemExit
-            
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
                     return
-                
+
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     posicao_mouse = event.pos
                     if retangulo_iniciar.collidepoint(posicao_mouse):
-                        return 
-                        
+                        return
+
         pygame.display.update()
 
 def ask_player_names():
@@ -442,7 +443,7 @@ def ask_player_names():
 
     fundo_nomes = pygame.image.load(os.path.join(IMG_PATH, "nome-jogadores.png"))
     fundo_nomes = pygame.transform.scale(fundo_nomes, (WIDTH, HEIGHT))
-    
+
     largura_caixa = 550
     altura_caixa = 52
     x_caixas = (WIDTH - largura_caixa) // 2
@@ -494,7 +495,7 @@ def ask_player_names():
 
         text1 = FONT_MED.render(name1 or "Digite o nome...", True, (200, 200, 200) if not name1 else WHITE)
         text2 = FONT_MED.render(name2 or "Digite o nome...", True, (200, 200, 200) if not name2 else WHITE)
-        
+
         WIN.blit(text1, (box1.x + 20, box1.y + (box1.height - text1.get_height()) // 2))
         WIN.blit(text2, (box2.x + 20, box2.y + (box2.height - text2.get_height()) // 2))
 
@@ -583,9 +584,9 @@ def run_phase(
         else:
             car2.coast()
 
-        if car1.laps >= 5 and winner is None:
+        if car1.laps >= TOTAL_VOLTAS and winner is None:
             winner = 1
-        if car2.laps >= 5 and winner is None:
+        if car2.laps >= TOTAL_VOLTAS and winner is None:
             winner = 2
 
         WIN.blit(grass, (0, 0))
@@ -605,8 +606,8 @@ def run_phase(
         car1.draw(WIN)
         car2.draw(WIN)
 
-        laps_1 = FONT_SMALL.render(f"{player1_name}: {car1.laps}/5", True, WHITE)
-        laps_2 = FONT_SMALL.render(f"{player2_name}: {car2.laps}/5", True, WHITE)
+        laps_1 = FONT_SMALL.render(f"{player1_name}: {car1.laps}/{TOTAL_VOLTAS}", True, WHITE)
+        laps_2 = FONT_SMALL.render(f"{player2_name}: {car2.laps}/{TOTAL_VOLTAS}", True, WHITE)
         phase_label = FONT_SMALL.render(f"Fase {level}", True, CYAN)
 
         WIN.blit(laps_1, (20, 18))
