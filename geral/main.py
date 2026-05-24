@@ -184,12 +184,12 @@ def tela_escolha_carros():
         )
         hint = FONT_SMALL.render(hint_text, True, YELLOW)
 
-        WIN.blit(info1, (40, 30))
-        WIN.blit(info2, (40, 65))
-        WIN.blit(hint, (40, 100))
+        # WIN.blit(info1, (40, 30))
+        # WIN.blit(info2, (40, 65))
+        # WIN.blit(hint, (40, 100))
 
         current_name = FONT_MED.render(CAR_OPTIONS[current]["label"], True, WHITE)
-        WIN.blit(current_name, current_name.get_rect(center=(WIDTH // 2, 185)))
+        # WIN.blit(current_name, current_name.get_rect(center=(WIDTH // 2, 185)))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -261,19 +261,57 @@ def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, volta
     else:
         print(f"Fase {fase} encerrada.")
 
+def exibir_instrucao(nome_imagem):
+    """Exibe uma imagem de instrução em tela cheia e aguarda ENTER."""
+    clock = pygame.time.Clock()
+    
+    # Carrega a imagem diretamente
+    fundo_instrucao = pygame.image.load(str(IMG_PATH / nome_imagem)).convert()
+    fundo_instrucao = pygame.transform.smoothscale(fundo_instrucao, (WIDTH, HEIGHT))
+
+    while True:
+        clock.tick(FPS)
+        WIN.blit(fundo_instrucao, (0, 0))
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                    return  # Sai da tela de instruções quando aperta ENTER
+
+        pygame.display.update()
+
+
 
 def main_geral():
+    # 1. Tela Inicial (Capa)
     tela_capa_jogo()
-    # escolha dos carros
+
+    # 2. Exibe Instrução de Escolha
+    exibir_instrucao("tela de instrucoes_escolha_carros.png")
+
+    # 3. Tela real de Escolha dos carros
     car1_sprite, car2_sprite = tela_escolha_carros()
-    # nomes dos jogadores
+
+    # 4. Pede os nomes dos jogadores
     player1_name, player2_name = fase1_module.ask_player_names()
-    # tela início da fase 1
+    
+    # 5. Exibe Instrução de como Jogar a Corrida
+    exibir_instrucao("tela de instrucoes_jogar.png")
+
+    # Prepara para iniciar a Fase 1
     pygame.event.clear()
     pygame.time.wait(200)
+    
+    # Limpa a tela antes de chamar a fase para evitar resquícios de imagens
+    WIN.fill(BLACK)
+    pygame.display.update()
+    
     fase1_module.start_screen()
 
-    # Fase 1
+    # Roda Fase 1
     phase1_winner, laps1_p1, laps1_p2 = call_compat(
         fase1_module.run_phase,
         1,
@@ -293,15 +331,16 @@ def main_geral():
         laps1_p2,
     )
 
-    # Fase 2
+    # Roda Fase 2
     phase2_winner, laps2_p1, laps2_p2 = call_compat(
-        fase2_module.run_phase_2,
+        fase2_module.run_phase,
+        2,
         player1_name,
         player2_name,
         car1_sprite,
         car2_sprite,
     )
-
+    
     chamar_resultado_modulo(
         fase2_module,
         2,
@@ -311,10 +350,7 @@ def main_geral():
         laps2_p1,
         laps2_p2,
     )
-
-    pygame.quit()
-    sys.exit()
-
-
 if __name__ == "__main__":
     main_geral()
+pygame.quit()
+sys.exit()
