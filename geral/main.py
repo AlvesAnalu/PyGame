@@ -184,12 +184,12 @@ def tela_escolha_carros():
         )
         hint = FONT_SMALL.render(hint_text, True, YELLOW)
 
-        WIN.blit(info1, (40, 30))
-        WIN.blit(info2, (40, 65))
-        WIN.blit(hint, (40, 100))
+        # WIN.blit(info1, (40, 30))
+        # WIN.blit(info2, (40, 65))
+        # WIN.blit(hint, (40, 100))
 
         current_name = FONT_MED.render(CAR_OPTIONS[current]["label"], True, WHITE)
-        WIN.blit(current_name, current_name.get_rect(center=(WIDTH // 2, 185)))
+        # WIN.blit(current_name, current_name.get_rect(center=(WIDTH // 2, 185)))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
