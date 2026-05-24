@@ -259,15 +259,10 @@ class SlotCar:
                 self.path_index = next_index
                 if self.path_index == 0:
                     self.laps += 1
-<<<<<<< HEAD
-                    if self.laps >= TOTAL_VOLTAS:
-                        self.locked = True; self.vel = 0.0; return
-=======
                     if self.laps >= 5:
                         self.locked = True
                         self.vel = 0.0
                         return
->>>>>>> 9c24bd39031f013cc47a2c8e74f6d5032c9d9ffc
                 continue
 
             step = min(remaining, dist)
@@ -502,15 +497,10 @@ def run_phase(level: int, player1_name: str, player2_name: str, car1_sprite=None
         else:
             car2.coast()
 
-<<<<<<< HEAD
-        if car1.laps >= TOTAL_VOLTAS and winner is None: winner = 1
-        if car2.laps >= TOTAL_VOLTAS and winner is None: winner = 2
-=======
         if car1.laps >= 3 and winner is None:
             winner = 1
         if car2.laps >= 3 and winner is None:
             winner = 2
->>>>>>> 9c24bd39031f013cc47a2c8e74f6d5032c9d9ffc
 
         WIN.blit(grass, (0, 0))
         WIN.blit(track, (0, 0))
@@ -527,15 +517,9 @@ def run_phase(level: int, player1_name: str, player2_name: str, car1_sprite=None
         car1.draw(WIN)
         car2.draw(WIN)
 
-<<<<<<< HEAD
-        laps_1 = FONT_SMALL.render(f"{player1_name}: {car1.laps}/{TOTAL_VOLTAS}", True, WHITE)
-        laps_2 = FONT_SMALL.render(f"{player2_name}: {car2.laps}/{TOTAL_VOLTAS}", True, WHITE)
-        phase_label = FONT_SMALL.render("Fase 2", True, CYAN)
-=======
         laps_1 = FONT_SMALL.render(f"{player1_name}: {car1.laps}/3", True, WHITE)
         laps_2 = FONT_SMALL.render(f"{player2_name}: {car2.laps}/3", True, WHITE)
         phase_label = FONT_SMALL.render(f"Fase {level}", True, CYAN)
->>>>>>> 9c24bd39031f013cc47a2c8e74f6d5032c9d9ffc
 
         WIN.blit(laps_1, (20, 18))
         WIN.blit(laps_2, (20, 46))
