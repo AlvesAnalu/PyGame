@@ -27,51 +27,6 @@ def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, volta
     else:
         print(f"Fase {fase} encerrada.")
 
-
-def main_geral():
-    tela_capa_jogo()
-    # escolha dos carros
-    car1_sprite, car2_sprite = tela_escolha_carros()
-    # nomes dos jogadores
-    player1_name, player2_name = fase1_module.ask_player_names()
-
-    # Fase 1
-    phase1_winner, laps1_p1, laps1_p2 = fase1_module.run_phase(1, player1_name, player2_name, car1_sprite, car2_sprite)
-    phase2_winner, laps2_p1, laps2_p2 = fase2_module.run_phase_2(player1_name, player2_name, car1_sprite, car2_sprite)
-
-    chamar_resultado_modulo(
-        fase1_module,
-        1,
-        phase1_winner,
-        player1_name,
-        player2_name,
-        laps1_p1,
-        laps1_p2,
-    )
-
-    # Fase 2
-    phase2_winner, laps2_p1, laps2_p2 = call_compat(
-        fase2_module.run_phase_2,
-        player1_name,
-        player2_name,
-        car1_sprite,
-        car2_sprite,
-    )
-
-    chamar_resultado_modulo(
-        fase2_module,
-        2,
-        phase2_winner,
-        player1_name,
-        player2_name,
-        laps2_p1,
-        laps2_p2,
-    )
-
-    pygame.quit()
-    sys.exit()
-
-import os
 os.environ["SDL_VIDEO_CENTERED"] = "1"
 pygame.init()
 pygame.font.init()
@@ -309,12 +264,14 @@ def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, volta
 
 def main_geral():
     tela_capa_jogo()
-
     # escolha dos carros
     car1_sprite, car2_sprite = tela_escolha_carros()
-
     # nomes dos jogadores
     player1_name, player2_name = fase1_module.ask_player_names()
+    # tela início da fase 1
+    pygame.event.clear()
+    pygame.time.wait(200)
+    fase1_module.start_screen()
 
     # Fase 1
     phase1_winner, laps1_p1, laps1_p2 = call_compat(
