@@ -443,13 +443,13 @@ def run_phase(level: int, player1_name: str, player2_name: str, car1_sprite=None
 
     grass, track, border, red_car_img, green_car_img = load_assets(level, car1_sprite, car2_sprite)
 
-    WIN = pygame.display.set_mode((1600, 1000))
+    WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 
     lane_offset = 22
 
-    grass = pygame.transform.scale(grass, (1600, 1000))
-    track = pygame.transform.scale(track, (1600, 1000))
-    border = pygame.transform.scale(border, (1600, 1000))
+    grass = pygame.transform.scale(grass, (WIDTH, HEIGHT))
+    track = pygame.transform.scale(track, (WIDTH, HEIGHT))
+    border = pygame.transform.scale(border, (WIDTH, HEIGHT))
 
     center_raw_points = centerline_points(level, track)
     lane_left, lane_right = build_lane_paths(track, level, lane_offset)
