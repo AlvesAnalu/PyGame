@@ -3,7 +3,76 @@ import sys
 import importlib.util
 from pathlib import Path
 import pygame
+import inspect
 
+def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, voltas2):
+    """
+    Chama a função de resultado do módulo da fase.
+    Aceita nomes diferentes de função para evitar erro de compatibilidade.
+    """
+    if hasattr(modulo, "show_results"):
+        modulo.show_results(fase, vencedor, nome1, nome2, voltas1, voltas2)
+    elif hasattr(modulo, "show_phase_result"):
+        modulo.show_phase_result(fase, vencedor, nome1, nome2, voltas1, voltas2)
+    elif hasattr(modulo, "show_message"):
+        texto_vencedor = nome1 if vencedor == 1 else nome2
+        modulo.show_message(
+            f"Resultado da Fase {fase}",
+            [
+                f"Vencedor: {texto_vencedor}",
+                f"{nome1}: {voltas1} voltas",
+                f"{nome2}: {voltas2} voltas",
+            ],
+        )
+    else:
+        print(f"Fase {fase} encerrada.")
+
+
+def main_geral():
+    tela_capa_jogo()
+    # escolha dos carros
+    car1_sprite, car2_sprite = tela_escolha_carros()
+    # nomes dos jogadores
+    player1_name, player2_name = fase1_module.ask_player_names()
+
+    # Fase 1
+    phase1_winner, laps1_p1, laps1_p2 = fase1_module.run_phase(1, player1_name, player2_name, car1_sprite, car2_sprite)
+    phase2_winner, laps2_p1, laps2_p2 = fase2_module.run_phase_2(player1_name, player2_name, car1_sprite, car2_sprite)
+
+    chamar_resultado_modulo(
+        fase1_module,
+        1,
+        phase1_winner,
+        player1_name,
+        player2_name,
+        laps1_p1,
+        laps1_p2,
+    )
+
+    # Fase 2
+    phase2_winner, laps2_p1, laps2_p2 = call_compat(
+        fase2_module.run_phase_2,
+        player1_name,
+        player2_name,
+        car1_sprite,
+        car2_sprite,
+    )
+
+    chamar_resultado_modulo(
+        fase2_module,
+        2,
+        phase2_winner,
+        player1_name,
+        player2_name,
+        laps2_p1,
+        laps2_p2,
+    )
+
+    pygame.quit()
+    sys.exit()
+
+import os
+os.environ["SDL_VIDEO_CENTERED"] = "1"
 pygame.init()
 pygame.font.init()
 
@@ -13,7 +82,7 @@ ROOT_DIR = CURRENT_DIR.parent
 FASE1_PATH = ROOT_DIR / "fase_1" / "mainfase1.py"
 FASE2_PATH = ROOT_DIR / "fase_2" / "mainfase2.py"
 
-WIDTH, HEIGHT = 900, 600
+WIDTH, HEIGHT = 1200, 900
 FPS = 60
 
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -53,6 +122,28 @@ CAR_OPTIONS = [
 ]
 
 
+def call_compat(func, *args):
+    """
+    Chama uma função passando apenas a quantidade de argumentos
+    que ela realmente aceita.
+    Isso evita quebrar caso uma fase ainda não tenha recebido a atualização
+    dos novos parâmetros.
+    """
+    sig = inspect.signature(func)
+    params = [
+        p for p in sig.parameters.values()
+        if p.kind in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+        )
+    ]
+
+    if any(p.kind == inspect.Parameter.VAR_POSITIONAL for p in sig.parameters.values()):
+        return func(*args)
+
+    return func(*args[:len(params)])
+
+
 def center_text(surface, text, font, color, y):
     rendered = font.render(text, True, color)
     rect = rendered.get_rect(center=(surface.get_width() // 2, y))
@@ -74,8 +165,9 @@ def tela_capa_jogo():
     largura_ajustada = int(largura_original * (WIDTH / 1200))
     altura_ajustada = int(altura_original * (HEIGHT / 900))
 
-    # Substitua o cálculo matemático complexo por valores fixos exatos se a imagem for estática
-    retangulo_iniciar = pygame.Rect(x_ajustado, y_ajustado, largura_ajustada, altura_ajustada)
+    retangulo_iniciar = pygame.Rect(
+        x_ajustado, y_ajustado, largura_ajustada, altura_ajustada
+    )
 
     while True:
         clock.tick(FPS)
@@ -110,11 +202,8 @@ def tela_escolha_carros():
     selected_p2 = None
     current = 0
 
-    # Áreas clicáveis aproximadas dos botões já existentes na imagem
     left_btn = pygame.Rect(80, 300, 180, 220)
     right_btn = pygame.Rect(WIDTH - 260, 300, 180, 220)
-
-    # Botão INICIAR da arte
     start_btn = pygame.Rect((WIDTH - 340) // 2, 470, 340, 95)
 
     stage = 1  # 1 = P1 escolhe, 2 = P2 escolhe
@@ -123,7 +212,6 @@ def tela_escolha_carros():
         clock.tick(FPS)
         WIN.blit(previews[current], (0, 0))
 
-        # Texto discreto para orientar sem poluir a tela
         if stage == 1:
             hint_text = "P1: use <- -> e clique em INICIAR para confirmar"
         else:
@@ -179,16 +267,10 @@ def tela_escolha_carros():
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if left_btn.collidepoint(event.pos):
-                    if stage == 1:
-                        current = (current - 1) % len(CAR_OPTIONS)
-                    else:
-                        current = (current - 1) % len(CAR_OPTIONS)
+                    current = (current - 1) % len(CAR_OPTIONS)
 
                 elif right_btn.collidepoint(event.pos):
-                    if stage == 1:
-                        current = (current + 1) % len(CAR_OPTIONS)
-                    else:
-                        current = (current + 1) % len(CAR_OPTIONS)
+                    current = (current + 1) % len(CAR_OPTIONS)
 
                 elif start_btn.collidepoint(event.pos):
                     if stage == 1:
@@ -200,6 +282,7 @@ def tela_escolha_carros():
                         return selected_p1["sprite"], selected_p2["sprite"]
 
         pygame.display.update()
+
 
 def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, voltas2):
     """
@@ -227,16 +310,22 @@ def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, volta
 def main_geral():
     tela_capa_jogo()
 
-    # tela de escolha dos carros
+    # escolha dos carros
     car1_sprite, car2_sprite = tela_escolha_carros()
 
     # nomes dos jogadores
     player1_name, player2_name = fase1_module.ask_player_names()
 
-    # fase 1
-    phase1_winner, laps1_p1, laps1_p2 = fase1_module.run_phase(
-        1, player1_name, player2_name, car1_sprite, car2_sprite
+    # Fase 1
+    phase1_winner, laps1_p1, laps1_p2 = call_compat(
+        fase1_module.run_phase,
+        1,
+        player1_name,
+        player2_name,
+        car1_sprite,
+        car2_sprite,
     )
+
     chamar_resultado_modulo(
         fase1_module,
         1,
@@ -247,10 +336,15 @@ def main_geral():
         laps1_p2,
     )
 
-    # fase 2
-    phase2_winner, laps2_p1, laps2_p2 = fase2_module.run_phase_2(
-        player1_name, player2_name, car1_sprite, car2_sprite
+    # Fase 2
+    phase2_winner, laps2_p1, laps2_p2 = call_compat(
+        fase2_module.run_phase_2,
+        player1_name,
+        player2_name,
+        car1_sprite,
+        car2_sprite,
     )
+
     chamar_resultado_modulo(
         fase2_module,
         2,
@@ -263,6 +357,7 @@ def main_geral():
 
     pygame.quit()
     sys.exit()
+
 
 if __name__ == "__main__":
     main_geral()
