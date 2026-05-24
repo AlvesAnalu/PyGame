@@ -264,9 +264,9 @@ def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, volta
 
 def main_geral():
     tela_capa_jogo()
-    # escolha dos carros
+
     car1_sprite, car2_sprite = tela_escolha_carros()
-    # nomes dos jogadores
+
     player1_name, player2_name = fase1_module.ask_player_names()
     # tela início da fase 1
     pygame.event.clear()
@@ -293,15 +293,14 @@ def main_geral():
         laps1_p2,
     )
 
-    # Fase 2
     phase2_winner, laps2_p1, laps2_p2 = call_compat(
-        fase2_module.run_phase_2,
+        fase2_module.run_phase,
+        2,
         player1_name,
         player2_name,
         car1_sprite,
         car2_sprite,
-    )
-
+)
     chamar_resultado_modulo(
         fase2_module,
         2,
@@ -311,10 +310,7 @@ def main_geral():
         laps2_p1,
         laps2_p2,
     )
-
-    pygame.quit()
-    sys.exit()
-
-
 if __name__ == "__main__":
     main_geral()
+pygame.quit()
+sys.exit()
