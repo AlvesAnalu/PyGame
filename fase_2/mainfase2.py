@@ -73,9 +73,22 @@ def load_assets(level: int, car1_sprite=None, car2_sprite=None):
     red_sprite = car1_sprite if car1_sprite else "mazda.png"
     green_sprite = car2_sprite if car2_sprite else "lfa.png"
 
-    red_car = load_image(red_sprite, 0.070, fallback="mazda.png")
-    green_car = load_image(green_sprite, 0.070, fallback="lfa.png")
+    SCALE_MAP = {
+        "gol.png": 0.090,
+        "lfa.png": 0.070,
+        "miata.png": 0.300,
+        "rolls.png": 0.170,
+        "rx7.png": 0.080,
+        "mazda.png": 0.070,
+    }
+
+    red_scale = SCALE_MAP.get(red_sprite, 0.070)
+    green_scale = SCALE_MAP.get(green_sprite, 0.070)
+
+    red_car = load_image(red_sprite, red_scale, fallback="mazda.png")
+    green_car = load_image(green_sprite, green_scale, fallback="lfa.png")
     return grass, track, border, red_car, green_car
+
 
 
 def pct(w: int, h: int, x: float, y: float) -> tuple[int, int]:
