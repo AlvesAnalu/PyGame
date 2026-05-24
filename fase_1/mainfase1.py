@@ -13,7 +13,6 @@ if CURRENT_DIR not in sys.path:
 
 from utils import scale_image, blit_rotate_center
 
-import os
 os.environ["SDL_VIDEO_CENTERED"] = "1"
 pygame.init()
 pygame.font.init()
