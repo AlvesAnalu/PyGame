@@ -485,9 +485,9 @@ def run_phase(level: int, player1_name: str, player2_name: str, car1_sprite=None
         else:
             car2.coast()
 
-        if car1.laps >= 5 and winner is None:
+        if car1.laps >= 3 and winner is None:
             winner = 1
-        if car2.laps >= 5 and winner is None:
+        if car2.laps >= 3 and winner is None:
             winner = 2
 
         WIN.blit(grass, (0, 0))
@@ -505,8 +505,8 @@ def run_phase(level: int, player1_name: str, player2_name: str, car1_sprite=None
         car1.draw(WIN)
         car2.draw(WIN)
 
-        laps_1 = FONT_SMALL.render(f"{player1_name}: {car1.laps}/5", True, WHITE)
-        laps_2 = FONT_SMALL.render(f"{player2_name}: {car2.laps}/5", True, WHITE)
+        laps_1 = FONT_SMALL.render(f"{player1_name}: {car1.laps}/3", True, WHITE)
+        laps_2 = FONT_SMALL.render(f"{player2_name}: {car2.laps}/3", True, WHITE)
         phase_label = FONT_SMALL.render(f"Fase {level}", True, CYAN)
 
         WIN.blit(laps_1, (20, 18))
