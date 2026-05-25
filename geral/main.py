@@ -258,6 +258,16 @@ def exibir_instrucao(nome_imagem):
 
 
 def main_geral():
+    # MÚSICA DOS MENUS
+    pygame.mixer.init()
+    caminho_musica_menu = ROOT_DIR / "music" / "principal.mp3"
+    try:
+        pygame.mixer.music.load(str(caminho_musica_menu))
+        pygame.mixer.music.set_volume(0.05)  # Volume em 5%
+        pygame.mixer.music.play(-1)         # loop 
+    except Exception as e:
+        print(f"Aviso: Não foi possível carregar a música do menu. Erro: {e}")
+
     # 1. Tela Inicial (Capa)
     tela_capa_jogo()
 
