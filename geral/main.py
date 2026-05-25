@@ -6,6 +6,13 @@ import pygame
 import inspect
 import ctypes
 
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(CURRENT_DIR)
+
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+from fase_2.utils import check_exit
+
 def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, voltas2):
     """
     Chama a função de resultado do módulo da fase.
@@ -152,6 +159,7 @@ def tela_capa_jogo():
         WIN.blit(fundo_capa, (0, 0))
 
         for event in pygame.event.get():
+            check_exit(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
@@ -212,6 +220,7 @@ def tela_escolha_carros():
         current_name = FONT_MED.render(CAR_OPTIONS[current]["label"], True, WHITE)
 
         for event in pygame.event.get():
+            check_exit(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
@@ -278,6 +287,7 @@ def exibir_instrucao(nome_imagem):
         WIN.blit(fundo_instrucao, (0, 0))
 
         for event in pygame.event.get():
+            check_exit(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
@@ -301,19 +311,14 @@ def main_geral():
 
     # 1. Tela Inicial (Capa)
     tela_capa_jogo()
-
     # 2. Exibe Instrução de Escolha
     exibir_instrucao("tela de instrucoes_escolha_carros.png")
-
     # 3. Tela real de Escolha dos carros
     car1_sprite, car2_sprite = tela_escolha_carros()
-
     # 4. Pede os nomes dos jogadores
     player1_name, player2_name = fase1_module.ask_player_names()
-
     # 5. Exibe Instrução de como Jogar a Corrida
     exibir_instrucao("tela de instrucoes_jogar.png")
-
     # --- INICIAR A MÚSICA DA CORRIDA APÓS OS MENUS ---
     caminho_musica = ROOT_DIR / "music" / "principal_sixdays.mp3"
     try:
@@ -323,17 +328,13 @@ def main_geral():
     except Exception as e:
         print(f"Aviso: Não foi possível carregar a música da corrida. Erro: {e}")
     # ------------------------------------------------------
-
     # Prepara para iniciar a Fase 1
     pygame.event.clear()
     pygame.time.wait(200)
-
     # Limpa a tela antes de chamar a fase para evitar resquícios de imagens
     WIN.fill(BLACK)
     pygame.display.update()
-
     fase1_module.start_screen()
-
     # Roda Fase 1
     phase1_winner, laps1_p1, laps1_p2 = call_compat(
         fase1_module.run_phase,

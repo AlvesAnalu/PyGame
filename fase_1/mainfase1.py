@@ -13,7 +13,7 @@ PHASE2_DIR = os.path.join(ROOT_DIR, "fase_2")
 if CURRENT_DIR not in sys.path:
     sys.path.insert(0, CURRENT_DIR)
 
-from utils import scale_image, blit_rotate_center
+from utils import check_exit, scale_image, blit_rotate_center
 
 # resolução da tela do monitor
 user32 = ctypes.windll.user32
@@ -359,6 +359,7 @@ def start_screen():
         clock.tick(FPS)
         WIN.blit(fundo_fase1, (0, 0))
         for event in pygame.event.get():
+            check_exit(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 raise SystemExit
@@ -402,6 +403,7 @@ def ask_player_names():
         clock.tick(FPS)
 
         for event in pygame.event.get():
+            check_exit(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 raise SystemExit
@@ -454,6 +456,7 @@ def show_message_screen(title, lines, footer="Pressione ENTER para continuar"):
     while True:
         clock.tick(FPS)
         for event in pygame.event.get():
+            check_exit(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 raise SystemExit
@@ -502,6 +505,7 @@ def run_phase(level: int, player1_name: str, player2_name: str, car1_sprite=None
         clock.tick(FPS)
 
         for event in pygame.event.get():
+            check_exit(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 raise SystemExit

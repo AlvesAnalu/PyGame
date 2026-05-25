@@ -12,7 +12,7 @@ FASE1_DIR = os.path.join(ROOT_DIR, "fase_1")
 if FASE1_DIR not in sys.path:
     sys.path.insert(0, FASE1_DIR)
 
-from utils import scale_image, blit_rotate_center
+from utils import check_exit, scale_image, blit_rotate_center
 
 pygame.init()
 pygame.font.init()
@@ -358,6 +358,7 @@ def run_phase_2(player1_name: str, player2_name: str, car1_sprite=None, car2_spr
         clock.tick(FPS)
 
         for event in pygame.event.get():
+            check_exit(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 raise SystemExit

@@ -19,3 +19,12 @@ def blit_rotate_center(
     new_rect = rotated_image.get_rect(center=image.get_rect(topleft=top_left).center)
     surface.blit(rotated_image, new_rect.topleft)
     return new_rect
+
+def check_exit(event):
+    if event.type == pygame.QUIT:
+        pygame.quit()
+        raise SystemExit
+
+    if event.type == pygame.KEYDOWN and event.key == pygame.K_BACKSPACE:
+        pygame.quit()
+        raise SystemExit
