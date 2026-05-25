@@ -308,7 +308,7 @@ def main_geral():
     caminho_musica = ROOT_DIR / "music" / "principal_sixdays.mp3"
     try:
         pygame.mixer.music.load(str(caminho_musica))
-        pygame.mixer.music.set_volume(0.3)  # Define volume moderado (30%)
+        pygame.mixer.music.set_volume(0.1)  # 
         pygame.mixer.music.play(-1)         # Toca em loop contínuo
     except Exception as e:
         print(f"Aviso: Não foi possível carregar a música da corrida. Erro: {e}")
