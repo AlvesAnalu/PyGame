@@ -184,12 +184,7 @@ def tela_escolha_carros():
         )
         hint = FONT_SMALL.render(hint_text, True, YELLOW)
 
-        # WIN.blit(info1, (40, 30))
-        # WIN.blit(info2, (40, 65))
-        # WIN.blit(hint, (40, 100))
-
         current_name = FONT_MED.render(CAR_OPTIONS[current]["label"], True, WHITE)
-        # WIN.blit(current_name, current_name.get_rect(center=(WIDTH // 2, 185)))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -239,32 +234,10 @@ def tela_escolha_carros():
         pygame.display.update()
 
 
-def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, voltas2):
-    """
-    Chama a função de resultado do módulo da fase.
-    Aceita nomes diferentes de função para evitar erro de compatibilidade.
-    """
-    if hasattr(modulo, "show_results"):
-        modulo.show_results(fase, vencedor, nome1, nome2, voltas1, voltas2)
-    elif hasattr(modulo, "show_phase_result"):
-        modulo.show_phase_result(fase, vencedor, nome1, nome2, voltas1, voltas2)
-    elif hasattr(modulo, "show_message"):
-        texto_vencedor = nome1 if vencedor == 1 else nome2
-        modulo.show_message(
-            f"Resultado da Fase {fase}",
-            [
-                f"Vencedor: {texto_vencedor}",
-                f"{nome1}: {voltas1} voltas",
-                f"{nome2}: {voltas2} voltas",
-            ],
-        )
-    else:
-        print(f"Fase {fase} encerrada.")
-
 def exibir_instrucao(nome_imagem):
     """Exibe uma imagem de instrução em tela cheia e aguarda ENTER."""
     clock = pygame.time.Clock()
-    
+
     # Carrega a imagem diretamente
     fundo_instrucao = pygame.image.load(str(IMG_PATH / nome_imagem)).convert()
     fundo_instrucao = pygame.transform.smoothscale(fundo_instrucao, (WIDTH, HEIGHT))
@@ -272,7 +245,7 @@ def exibir_instrucao(nome_imagem):
     while True:
         clock.tick(FPS)
         WIN.blit(fundo_instrucao, (0, 0))
-        
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -282,7 +255,6 @@ def exibir_instrucao(nome_imagem):
                     return  # Sai da tela de instruções quando aperta ENTER
 
         pygame.display.update()
-
 
 
 def main_geral():
@@ -297,18 +269,29 @@ def main_geral():
 
     # 4. Pede os nomes dos jogadores
     player1_name, player2_name = fase1_module.ask_player_names()
-    
+
     # 5. Exibe Instrução de como Jogar a Corrida
     exibir_instrucao("tela de instrucoes_jogar.png")
+
+    # --- NOVO: INICIAR A MÚSICA DA CORRIDA APÓS OS MENUS ---
+    pygame.mixer.init()
+    caminho_musica = ROOT_DIR / "music" / "principal_sixdays.mp3"
+    try:
+        pygame.mixer.music.load(str(caminho_musica))
+        pygame.mixer.music.set_volume(0.3)  # Define volume moderado (30%)
+        pygame.mixer.music.play(-1)         # Toca em loop contínuo
+    except Exception as e:
+        print(f"Aviso: Não foi possível carregar a música da corrida. Erro: {e}")
+    # ------------------------------------------------------
 
     # Prepara para iniciar a Fase 1
     pygame.event.clear()
     pygame.time.wait(200)
-    
+
     # Limpa a tela antes de chamar a fase para evitar resquícios de imagens
     WIN.fill(BLACK)
     pygame.display.update()
-    
+
     fase1_module.start_screen()
 
     # Roda Fase 1
@@ -331,7 +314,7 @@ def main_geral():
         laps1_p2,
     )
 
-    # Roda Fase 2
+    # Roda Fase 2 (A música continuará tocando aqui sem interrupção!)
     phase2_winner, laps2_p1, laps2_p2 = call_compat(
         fase2_module.run_phase,
         2,
@@ -340,7 +323,7 @@ def main_geral():
         car1_sprite,
         car2_sprite,
     )
-    
+
     chamar_resultado_modulo(
         fase2_module,
         2,
@@ -350,6 +333,8 @@ def main_geral():
         laps2_p1,
         laps2_p2,
     )
+
+
 if __name__ == "__main__":
     main_geral()
 pygame.quit()
