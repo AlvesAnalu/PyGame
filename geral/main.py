@@ -30,6 +30,7 @@ def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, volta
 os.environ["SDL_VIDEO_CENTERED"] = "1"
 pygame.init()
 pygame.font.init()
+pygame.mixer.init() # INICIA O ÁUDIO AQUI PARA CARREGAR OS EFEITOS
 
 CURRENT_DIR = Path(__file__).resolve().parent
 ROOT_DIR = CURRENT_DIR.parent
@@ -55,6 +56,20 @@ FONT_BIG = pygame.font.SysFont("arial", 54, bold=True)
 FONT_MED = pygame.font.SysFont("arial", 34, bold=True)
 FONT_SMALL = pygame.font.SysFont("arial", 24)
 
+# --- CARREGADOR DO EFEITO SONORO DO MENU ---
+try:
+    caminho_sfx = ROOT_DIR / "music" / "escolher_carro.mp3"
+    SFX_BOTAO = pygame.mixer.Sound(str(caminho_sfx))
+    SFX_BOTAO.set_volume(0.5)
+except Exception as e:
+    print(f"Aviso: Não foi possível carregar o efeito sonoro. Erro: {e}")
+    SFX_BOTAO = None
+
+def tocar_sfx_menu():
+    """Toca o som de clique do menu se o arquivo tiver sido carregado com sucesso."""
+    if SFX_BOTAO:
+        SFX_BOTAO.play()
+# -------------------------------------------
 
 def load_module(module_name: str, file_path: Path):
     spec = importlib.util.spec_from_file_location(module_name, str(file_path))
@@ -81,8 +96,6 @@ def call_compat(func, *args):
     """
     Chama uma função passando apenas a quantidade de argumentos
     que ela realmente aceita.
-    Isso evita quebrar caso uma fase ainda não tenha recebido a atualização
-    dos novos parâmetros.
     """
     sig = inspect.signature(func)
     params = [
@@ -135,10 +148,12 @@ def tela_capa_jogo():
 
             if event.type == pygame.KEYDOWN:
                 if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                    tocar_sfx_menu()  # Toca o SFX
                     return
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if retangulo_iniciar.collidepoint(event.pos):
+                    tocar_sfx_menu()  # Toca o SFX
                     return
 
         pygame.display.update()
@@ -184,12 +199,7 @@ def tela_escolha_carros():
         )
         hint = FONT_SMALL.render(hint_text, True, YELLOW)
 
-        # WIN.blit(info1, (40, 30))
-        # WIN.blit(info2, (40, 65))
-        # WIN.blit(hint, (40, 100))
-
         current_name = FONT_MED.render(CAR_OPTIONS[current]["label"], True, WHITE)
-        # WIN.blit(current_name, current_name.get_rect(center=(WIDTH // 2, 185)))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -199,35 +209,42 @@ def tela_escolha_carros():
             if event.type == pygame.KEYDOWN:
                 if stage == 1:
                     if event.key in (pygame.K_RIGHT, pygame.K_LEFT):
+                        tocar_sfx_menu()  # Toca o SFX
                         if event.key == pygame.K_RIGHT:
                             current = (current + 1) % len(CAR_OPTIONS)
                         else:
                             current = (current - 1) % len(CAR_OPTIONS)
 
                     if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                        tocar_sfx_menu()  # Toca o SFX
                         selected_p1 = CAR_OPTIONS[current]
                         stage = 2
                         current = 0
 
                 elif stage == 2:
                     if event.key in (pygame.K_d, pygame.K_a):
+                        tocar_sfx_menu()  # Toca o SFX
                         if event.key == pygame.K_d:
                             current = (current + 1) % len(CAR_OPTIONS)
                         else:
                             current = (current - 1) % len(CAR_OPTIONS)
 
                     if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                        tocar_sfx_menu()  # Toca o SFX
                         selected_p2 = CAR_OPTIONS[current]
                         return selected_p1["sprite"], selected_p2["sprite"]
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if left_btn.collidepoint(event.pos):
+                    tocar_sfx_menu()  # Toca o SFX
                     current = (current - 1) % len(CAR_OPTIONS)
 
                 elif right_btn.collidepoint(event.pos):
+                    tocar_sfx_menu()  # Toca o SFX
                     current = (current + 1) % len(CAR_OPTIONS)
 
                 elif start_btn.collidepoint(event.pos):
+                    tocar_sfx_menu()  # Toca o SFX
                     if stage == 1:
                         selected_p1 = CAR_OPTIONS[current]
                         stage = 2
@@ -239,53 +256,39 @@ def tela_escolha_carros():
         pygame.display.update()
 
 
-def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, voltas2):
-    """
-    Chama a função de resultado do módulo da fase.
-    Aceita nomes diferentes de função para evitar erro de compatibilidade.
-    """
-    if hasattr(modulo, "show_results"):
-        modulo.show_results(fase, vencedor, nome1, nome2, voltas1, voltas2)
-    elif hasattr(modulo, "show_phase_result"):
-        modulo.show_phase_result(fase, vencedor, nome1, nome2, voltas1, voltas2)
-    elif hasattr(modulo, "show_message"):
-        texto_vencedor = nome1 if vencedor == 1 else nome2
-        modulo.show_message(
-            f"Resultado da Fase {fase}",
-            [
-                f"Vencedor: {texto_vencedor}",
-                f"{nome1}: {voltas1} voltas",
-                f"{nome2}: {voltas2} voltas",
-            ],
-        )
-    else:
-        print(f"Fase {fase} encerrada.")
-
 def exibir_instrucao(nome_imagem):
     """Exibe uma imagem de instrução em tela cheia e aguarda ENTER."""
     clock = pygame.time.Clock()
-    
-    # Carrega a imagem diretamente
+
     fundo_instrucao = pygame.image.load(str(IMG_PATH / nome_imagem)).convert()
     fundo_instrucao = pygame.transform.smoothscale(fundo_instrucao, (WIDTH, HEIGHT))
 
     while True:
         clock.tick(FPS)
         WIN.blit(fundo_instrucao, (0, 0))
-        
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-                    return  # Sai da tela de instruções quando aperta ENTER
+                    tocar_sfx_menu()  # Toca o SFX
+                    return
 
         pygame.display.update()
 
 
-
 def main_geral():
+    # MÚSICA DOS MENUS (Música Ambiente)
+    caminho_musica_menu = ROOT_DIR / "music" / "principal.mp3"
+    try:
+        pygame.mixer.music.load(str(caminho_musica_menu))
+        pygame.mixer.music.set_volume(0.05)  # Volume em 5%
+        pygame.mixer.music.play(-1)         # loop
+    except Exception as e:
+        print(f"Aviso: Não foi possível carregar a música do menu. Erro: {e}")
+
     # 1. Tela Inicial (Capa)
     tela_capa_jogo()
 
@@ -297,18 +300,28 @@ def main_geral():
 
     # 4. Pede os nomes dos jogadores
     player1_name, player2_name = fase1_module.ask_player_names()
-    
+
     # 5. Exibe Instrução de como Jogar a Corrida
     exibir_instrucao("tela de instrucoes_jogar.png")
+
+    # --- INICIAR A MÚSICA DA CORRIDA APÓS OS MENUS ---
+    caminho_musica = ROOT_DIR / "music" / "principal_sixdays.mp3"
+    try:
+        pygame.mixer.music.load(str(caminho_musica))
+        pygame.mixer.music.set_volume(0.1)  # 
+        pygame.mixer.music.play(-1)         # Toca em loop contínuo
+    except Exception as e:
+        print(f"Aviso: Não foi possível carregar a música da corrida. Erro: {e}")
+    # ------------------------------------------------------
 
     # Prepara para iniciar a Fase 1
     pygame.event.clear()
     pygame.time.wait(200)
-    
+
     # Limpa a tela antes de chamar a fase para evitar resquícios de imagens
     WIN.fill(BLACK)
     pygame.display.update()
-    
+
     fase1_module.start_screen()
 
     # Roda Fase 1
@@ -331,7 +344,7 @@ def main_geral():
         laps1_p2,
     )
 
-    # Roda Fase 2
+    # Roda Fase 2 (A música continuará tocando aqui sem interrupção!)
     phase2_winner, laps2_p1, laps2_p2 = call_compat(
         fase2_module.run_phase,
         2,
@@ -340,7 +353,7 @@ def main_geral():
         car1_sprite,
         car2_sprite,
     )
-    
+
     chamar_resultado_modulo(
         fase2_module,
         2,
@@ -350,6 +363,8 @@ def main_geral():
         laps2_p1,
         laps2_p2,
     )
+
+
 if __name__ == "__main__":
     main_geral()
 pygame.quit()

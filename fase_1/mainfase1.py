@@ -289,6 +289,13 @@ class SlotCar:
         self.vel += self.acceleration
 
         if self.vel > self.derail_vel:
+            # SOM DO CARRO MORRENDO
+            try:
+                # Volta uma pasta para sair de 'fase_1' e entra em 'music'
+                caminho_sfx = os.path.join(os.path.dirname(__file__), "..", "music", "carro_morrendo.mp3")
+                pygame.mixer.Sound(caminho_sfx).play()
+            except Exception as e:
+                print(f"Aviso: Não foi possível tocar o som de batida na Fase 1. Erro: {e}")
             self.crashed = True
             self.crash_timer = self.PENALTY_FRAMES
             self.vel = 0.0
@@ -390,8 +397,14 @@ def ask_player_names():
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_TAB:
+                    try:
+                        pygame.mixer.Sound(os.path.join(IMG_PATH, "..", "music", "escolher_carro.mp3")).play()
+                    except: pass
                     active = 2 if active == 1 else 1
                 elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                    try:
+                        pygame.mixer.Sound(os.path.join(IMG_PATH, "..", "music", "escolher_carro.mp3")).play()
+                    except: pass
                     return name1.strip() or "Player 1", name2.strip() or "Player 2"
                 elif event.key == pygame.K_BACKSPACE:
                     if active == 1:
