@@ -350,6 +350,13 @@ class SlotCarPhase2:
             return
         self.vel += self.acceleration
         if self.vel > self.derail_vel:
+            # SOM DO CARRO MORRENDO
+            try:
+                # Volta uma pasta para sair de 'fase_2' e entra em 'music'
+                caminho_sfx = os.path.join(os.path.dirname(__file__), "..", "music", "carro_morrendo.mp3")
+                pygame.mixer.Sound(caminho_sfx).play()
+            except Exception as e:
+                print(f"Aviso: Não foi possível tocar o som de batida na Fase 2. Erro: {e}")
             self.crashed = True
             self.crash_timer = self.PENALTY_FRAMES
             self.vel = 0.0
