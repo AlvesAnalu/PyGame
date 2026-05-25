@@ -30,6 +30,7 @@ def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, volta
 os.environ["SDL_VIDEO_CENTERED"] = "1"
 pygame.init()
 pygame.font.init()
+pygame.mixer.init() # INICIA O ÁUDIO AQUI PARA CARREGAR OS EFEITOS
 
 CURRENT_DIR = Path(__file__).resolve().parent
 ROOT_DIR = CURRENT_DIR.parent
@@ -55,6 +56,20 @@ FONT_BIG = pygame.font.SysFont("arial", 54, bold=True)
 FONT_MED = pygame.font.SysFont("arial", 34, bold=True)
 FONT_SMALL = pygame.font.SysFont("arial", 24)
 
+# --- CARREGADOR DO EFEITO SONORO DO MENU ---
+try:
+    caminho_sfx = ROOT_DIR / "music" / "escolher_carro.mp3"
+    SFX_BOTAO = pygame.mixer.Sound(str(caminho_sfx))
+    SFX_BOTAO.set_volume(0.5)
+except Exception as e:
+    print(f"Aviso: Não foi possível carregar o efeito sonoro. Erro: {e}")
+    SFX_BOTAO = None
+
+def tocar_sfx_menu():
+    """Toca o som de clique do menu se o arquivo tiver sido carregado com sucesso."""
+    if SFX_BOTAO:
+        SFX_BOTAO.play()
+# -------------------------------------------
 
 def load_module(module_name: str, file_path: Path):
     spec = importlib.util.spec_from_file_location(module_name, str(file_path))
@@ -81,8 +96,6 @@ def call_compat(func, *args):
     """
     Chama uma função passando apenas a quantidade de argumentos
     que ela realmente aceita.
-    Isso evita quebrar caso uma fase ainda não tenha recebido a atualização
-    dos novos parâmetros.
     """
     sig = inspect.signature(func)
     params = [
@@ -135,10 +148,12 @@ def tela_capa_jogo():
 
             if event.type == pygame.KEYDOWN:
                 if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                    tocar_sfx_menu()  # Toca o SFX
                     return
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if retangulo_iniciar.collidepoint(event.pos):
+                    tocar_sfx_menu()  # Toca o SFX
                     return
 
         pygame.display.update()
@@ -194,35 +209,42 @@ def tela_escolha_carros():
             if event.type == pygame.KEYDOWN:
                 if stage == 1:
                     if event.key in (pygame.K_RIGHT, pygame.K_LEFT):
+                        tocar_sfx_menu()  # Toca o SFX
                         if event.key == pygame.K_RIGHT:
                             current = (current + 1) % len(CAR_OPTIONS)
                         else:
                             current = (current - 1) % len(CAR_OPTIONS)
 
                     if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                        tocar_sfx_menu()  # Toca o SFX
                         selected_p1 = CAR_OPTIONS[current]
                         stage = 2
                         current = 0
 
                 elif stage == 2:
                     if event.key in (pygame.K_d, pygame.K_a):
+                        tocar_sfx_menu()  # Toca o SFX
                         if event.key == pygame.K_d:
                             current = (current + 1) % len(CAR_OPTIONS)
                         else:
                             current = (current - 1) % len(CAR_OPTIONS)
 
                     if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                        tocar_sfx_menu()  # Toca o SFX
                         selected_p2 = CAR_OPTIONS[current]
                         return selected_p1["sprite"], selected_p2["sprite"]
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if left_btn.collidepoint(event.pos):
+                    tocar_sfx_menu()  # Toca o SFX
                     current = (current - 1) % len(CAR_OPTIONS)
 
                 elif right_btn.collidepoint(event.pos):
+                    tocar_sfx_menu()  # Toca o SFX
                     current = (current + 1) % len(CAR_OPTIONS)
 
                 elif start_btn.collidepoint(event.pos):
+                    tocar_sfx_menu()  # Toca o SFX
                     if stage == 1:
                         selected_p1 = CAR_OPTIONS[current]
                         stage = 2
@@ -238,7 +260,6 @@ def exibir_instrucao(nome_imagem):
     """Exibe uma imagem de instrução em tela cheia e aguarda ENTER."""
     clock = pygame.time.Clock()
 
-    # Carrega a imagem diretamente
     fundo_instrucao = pygame.image.load(str(IMG_PATH / nome_imagem)).convert()
     fundo_instrucao = pygame.transform.smoothscale(fundo_instrucao, (WIDTH, HEIGHT))
 
@@ -252,19 +273,19 @@ def exibir_instrucao(nome_imagem):
                 sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-                    return  # Sai da tela de instruções quando aperta ENTER
+                    tocar_sfx_menu()  # Toca o SFX
+                    return
 
         pygame.display.update()
 
 
 def main_geral():
-    # MÚSICA DOS MENUS
-    pygame.mixer.init()
+    # MÚSICA DOS MENUS (Música Ambiente)
     caminho_musica_menu = ROOT_DIR / "music" / "principal.mp3"
     try:
         pygame.mixer.music.load(str(caminho_musica_menu))
         pygame.mixer.music.set_volume(0.05)  # Volume em 5%
-        pygame.mixer.music.play(-1)         # loop 
+        pygame.mixer.music.play(-1)         # loop
     except Exception as e:
         print(f"Aviso: Não foi possível carregar a música do menu. Erro: {e}")
 
@@ -283,8 +304,7 @@ def main_geral():
     # 5. Exibe Instrução de como Jogar a Corrida
     exibir_instrucao("tela de instrucoes_jogar.png")
 
-    # --- NOVO: INICIAR A MÚSICA DA CORRIDA APÓS OS MENUS ---
-    pygame.mixer.init()
+    # --- INICIAR A MÚSICA DA CORRIDA APÓS OS MENUS ---
     caminho_musica = ROOT_DIR / "music" / "principal_sixdays.mp3"
     try:
         pygame.mixer.music.load(str(caminho_musica))
