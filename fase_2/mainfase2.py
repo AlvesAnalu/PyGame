@@ -58,11 +58,11 @@ def load_phase2_assets(car1_sprite=None, car2_sprite=None):
     green_sprite = car2_sprite if car2_sprite else "lfa.png"
 
     SCALE_MAP = {
-        "gol.png": 0.090,
+        "gol.png": 0.058,
         "lfa.png": 0.045,
-        "miata.png": 0.300,
-        "rolls.png": 0.170,
-        "rx7.png": 0.080,
+        "miata.png": 0.193,
+        "rolls.png": 0.109,
+        "rx7.png": 0.051,
         "mazda.png": 0.045,
     }
 
