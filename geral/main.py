@@ -346,7 +346,7 @@ def main_geral():
 
     # Roda Fase 2 (A música continuará tocando aqui sem interrupção!)
     phase2_winner, laps2_p1, laps2_p2 = call_compat(
-        fase2_module.run_phase,
+        fase2_module.run_phase_2,
         2,
         player1_name,
         player2_name,
