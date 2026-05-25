@@ -1,8 +1,10 @@
+import ctypes
 import importlib.util
 import math
 import os
 import sys
 import pygame
+import ctypes
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(CURRENT_DIR)
@@ -13,7 +15,17 @@ if CURRENT_DIR not in sys.path:
 
 from utils import scale_image, blit_rotate_center
 
-os.environ["SDL_VIDEO_CENTERED"] = "1"
+# resolução da tela do monitor
+user32 = ctypes.windll.user32
+screen_width = user32.GetSystemMetrics(0)
+
+WIDTH = 1200
+HEIGHT = 825
+# centraliza horizontalmente
+x = (screen_width - WIDTH) // 2
+# define altura manual
+y = 0
+os.environ["SDL_VIDEO_WINDOW_POS"] = f"{x},{y}"
 pygame.init()
 pygame.font.init()
 
@@ -29,8 +41,7 @@ TRACK_BORDER_MASK = pygame.mask.from_surface(TRACK_BORDER)
 RED_CAR = scale_image(pygame.image.load(os.path.join(IMG_PATH, "mazda.png")), 0.070)
 GREEN_CAR = scale_image(pygame.image.load(os.path.join(IMG_PATH, "lfa.png")), 0.070)
 
-WIDTH, HEIGHT = 1200,900
-WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+WIN = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
 pygame.display.set_caption("Autorama 2 Jogadores")
 
 FONT_BIG = pygame.font.SysFont("arial", 54, bold=True)
@@ -378,8 +389,8 @@ def ask_player_names():
     altura_caixa = 52
     x_caixas = (WIDTH - largura_caixa) // 2
 
-    box1 = pygame.Rect(x_caixas, 390, largura_caixa, altura_caixa)
-    box2 = pygame.Rect(x_caixas, 565, largura_caixa, altura_caixa)
+    box1 = pygame.Rect(x_caixas, 355, largura_caixa, altura_caixa)
+    box2 = pygame.Rect(x_caixas, 515, largura_caixa, altura_caixa)
 
     largura_botao = 340
     altura_botao = 75
@@ -468,7 +479,8 @@ def run_phase(level: int, player1_name: str, player2_name: str, car1_sprite=None
 
     grass, track, border, red_car_img, green_car_img = load_assets(level, car1_sprite, car2_sprite)
 
-    WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+    os.environ["SDL_VIDEO_WINDOW_POS"] = f"{x},{y}"
+    WIN = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
 
     lane_offset = 22
 

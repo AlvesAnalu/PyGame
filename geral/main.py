@@ -4,6 +4,7 @@ import importlib.util
 from pathlib import Path
 import pygame
 import inspect
+import ctypes
 
 def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, voltas2):
     """
@@ -27,7 +28,16 @@ def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, volta
     else:
         print(f"Fase {fase} encerrada.")
 
-os.environ["SDL_VIDEO_CENTERED"] = "1"
+# resolução da tela do monitor
+user32 = ctypes.windll.user32
+screen_width = user32.GetSystemMetrics(0)
+WIDTH = 1200
+HEIGHT = 825
+# centraliza horizontalmente
+x = (screen_width - WIDTH) // 2
+# define altura manual
+y = 0
+os.environ["SDL_VIDEO_WINDOW_POS"] = f"{x},{y}"
 pygame.init()
 pygame.font.init()
 pygame.mixer.init() # INICIA O ÁUDIO AQUI PARA CARREGAR OS EFEITOS
@@ -38,10 +48,10 @@ ROOT_DIR = CURRENT_DIR.parent
 FASE1_PATH = ROOT_DIR / "fase_1" / "mainfase1.py"
 FASE2_PATH = ROOT_DIR / "fase_2" / "mainfase2.py"
 
-WIDTH, HEIGHT = 1200, 900
+WIDTH, HEIGHT = 1200, 825
 FPS = 60
 
-WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+WIN = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
 pygame.display.set_caption("Autorama Arcade - Menu Principal")
 
 IMG_PATH = ROOT_DIR / "img"
