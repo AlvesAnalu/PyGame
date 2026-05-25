@@ -59,11 +59,11 @@ def load_phase2_assets(car1_sprite=None, car2_sprite=None):
 
     SCALE_MAP = {
         "gol.png": 0.090,
-        "lfa.png": 0.070,
+        "lfa.png": 0.045,
         "miata.png": 0.300,
         "rolls.png": 0.170,
         "rx7.png": 0.080,
-        "mazda.png": 0.070,
+        "mazda.png": 0.045,
     }
 
     red_scale = SCALE_MAP.get(red_sprite, 0.070)
