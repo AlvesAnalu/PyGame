@@ -19,12 +19,12 @@ def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, volta
     Aceita nomes diferentes de função para evitar erro de compatibilidade.
     """
     if hasattr(modulo, "show_results"):
-        modulo.show_results(fase, vencedor, nome1, nome2, voltas1, voltas2)
+        return modulo.show_results(fase, vencedor, nome1, nome2, voltas1, voltas2)
     elif hasattr(modulo, "show_phase_result"):
-        modulo.show_phase_result(fase, vencedor, nome1, nome2, voltas1, voltas2)
+        return modulo.show_phase_result(fase, vencedor, nome1, nome2, voltas1, voltas2)
     elif hasattr(modulo, "show_message"):
         texto_vencedor = nome1 if vencedor == 1 else nome2
-        modulo.show_message(
+        return modulo.show_message(
             f"Resultado da Fase {fase}",
             [
                 f"Vencedor: {texto_vencedor}",
@@ -34,6 +34,7 @@ def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, volta
         )
     else:
         print(f"Fase {fase} encerrada.")
+        return None
 
 # resolução da tela do monitor
 user32 = ctypes.windll.user32
@@ -95,7 +96,6 @@ def load_module(module_name: str, file_path: Path):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
-
 
 fase1_module = load_module("mainfase1", FASE1_PATH)
 fase2_module = load_module("mainfase2", FASE2_PATH)
@@ -300,42 +300,35 @@ def exibir_instrucao(nome_imagem):
 
 
 def main_geral():
-    # MÚSICA DOS MENUS (Música Ambiente)
     caminho_musica_menu = ROOT_DIR / "music" / "principal.mp3"
     try:
         pygame.mixer.music.load(str(caminho_musica_menu))
-        pygame.mixer.music.set_volume(0.05)  # Volume em 5%
-        pygame.mixer.music.play(-1)         # loop
+        pygame.mixer.music.set_volume(0.05)
+        pygame.mixer.music.play(-1)
     except Exception as e:
         print(f"Aviso: Não foi possível carregar a música do menu. Erro: {e}")
 
-    # 1. Tela Inicial (Capa)
     tela_capa_jogo()
-    # 2. Exibe Instrução de Escolha
     exibir_instrucao("tela de instrucoes_escolha_carros.png")
-    # 3. Tela real de Escolha dos carros
     car1_sprite, car2_sprite = tela_escolha_carros()
-    # 4. Pede os nomes dos jogadores
     player1_name, player2_name = fase1_module.ask_player_names()
-    # 5. Exibe Instrução de como Jogar a Corrida
     exibir_instrucao("tela de instrucoes_jogar.png")
-    # --- INICIAR A MÚSICA DA CORRIDA APÓS OS MENUS ---
+
     caminho_musica = ROOT_DIR / "music" / "principal_sixdays.mp3"
     try:
         pygame.mixer.music.load(str(caminho_musica))
-        pygame.mixer.music.set_volume(0.1)  # 
-        pygame.mixer.music.play(-1)         # Toca em loop contínuo
+        pygame.mixer.music.set_volume(0.1)
+        pygame.mixer.music.play(-1)
     except Exception as e:
         print(f"Aviso: Não foi possível carregar a música da corrida. Erro: {e}")
-    # ------------------------------------------------------
-    # Prepara para iniciar a Fase 1
+
     pygame.event.clear()
     pygame.time.wait(200)
-    # Limpa a tela antes de chamar a fase para evitar resquícios de imagens
     WIN.fill(BLACK)
     pygame.display.update()
+
     fase1_module.start_screen()
-    # Roda Fase 1
+
     phase1_winner, laps1_p1, laps1_p2 = call_compat(
         fase1_module.run_phase,
         1,
@@ -355,26 +348,25 @@ def main_geral():
         laps1_p2,
     )
 
-    # Roda Fase 2 (A música continuará tocando aqui sem interrupção!)
     phase2_winner, laps2_p1, laps2_p2 = call_compat(
         fase2_module.run_phase_2,
-        2,
         player1_name,
         player2_name,
         car1_sprite,
         car2_sprite,
     )
 
-    chamar_resultado_modulo(
-        fase2_module,
-        2,
-        phase2_winner,
-        player1_name,
-        player2_name,
-        laps2_p1,
-        laps2_p2,
-    )
+    resultado_final = fase2_module.show_results(
+    2,
+    phase2_winner,
+    player1_name,
+    player2_name,
+    laps2_p1,
+    laps2_p2,
+)
 
+    if resultado_final == "restart":
+        return main_geral()
 
 if __name__ == "__main__":
     main_geral()

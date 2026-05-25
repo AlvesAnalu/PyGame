@@ -31,7 +31,8 @@ FONT_MED = pygame.font.SysFont("arial", 34, bold=True)
 
 # --- CONFIGURAÇÕES DA EQUIPE ---
 TOTAL_VOLTAS = 3
-WIDTH, HEIGHT = 1200, 900
+WIDTH, HEIGHT = 1200, 825
+WIN = None
 
 
 def load_image(filename: str, scale: float = 1.0, fallback: str | None = None) -> pygame.Surface:
@@ -42,7 +43,6 @@ def load_image(filename: str, scale: float = 1.0, fallback: str | None = None) -
         path = os.path.join(IMG_PATH, fallback)
     image = pygame.image.load(path)
     return scale_image(image, scale)
-
 
 def load_phase2_assets(car1_sprite=None, car2_sprite=None):
     # Carrega as imagens e já as redimensiona para a nova resolução da equipe (1200x900)
@@ -58,11 +58,10 @@ def load_phase2_assets(car1_sprite=None, car2_sprite=None):
     green_sprite = car2_sprite if car2_sprite else "lfa.png"
 
     SCALE_MAP = {
-        "gol.png": 0.058,
+        "gol.png": 0.048,
         "lfa.png": 0.045,
         "miata.png": 0.193,
-        "rolls.png": 0.109,
-        "rx7.png": 0.051,
+        "rolls.png": 0.112,
         "mazda.png": 0.045,
     }
 
@@ -74,10 +73,8 @@ def load_phase2_assets(car1_sprite=None, car2_sprite=None):
 
     return grass, track, red_car, green_car
 
-
 def pct(w: int, h: int, x: float, y: float) -> tuple[int, int]:
     return int(w * x), int(h * y)
-
 
 def build_path(points: list[tuple[int, int]], density: int = 18) -> list[tuple[float, float]]:
     path: list[tuple[float, float]] = []
@@ -91,13 +88,11 @@ def build_path(points: list[tuple[int, int]], density: int = 18) -> list[tuple[f
             path.append((x, y))
     return path
 
-
 def normalize(x: float, y: float) -> tuple[float, float]:
     dist = math.hypot(x, y)
     if dist == 0:
         return 0.0, 0.0
     return x / dist, y / dist
-
 
 def offset_closed_polyline(points: list[tuple[int, int]], offset: float) -> list[tuple[int, int]]:
     result: list[tuple[int, int]] = []
@@ -127,7 +122,6 @@ def offset_closed_polyline(points: list[tuple[int, int]], offset: float) -> list
 
         result.append((int(x + ox * length), int(y + oy * length)))
     return result
-
 
 def centerline_points(level: int, track: pygame.Surface) -> list[tuple[int, int]]:
     w, h = track.get_width(), track.get_height()
@@ -215,13 +209,11 @@ def centerline_points(level: int, track: pygame.Surface) -> list[tuple[int, int]
 
     return [pct(w, h, x, y) for x, y in raw]
 
-
 def build_lane_paths_phase2(track: pygame.Surface, lane_offset: int = 24):
     center = centerline_points(2, track)
     left_lane = build_path(offset_closed_polyline(center, -lane_offset), density=18)
     right_lane = build_path(offset_closed_polyline(center, lane_offset), density=18)
     return left_lane, right_lane, center
-
 
 class SlotCarPhase2:
     def __init__(self, image: pygame.Surface, path: list[tuple[float, float]]):
@@ -333,15 +325,56 @@ class SlotCarPhase2:
         if self.vel > 0:
             self.advance(self.vel)
 
+def show_results(fase, vencedor, nome1, nome2, voltas1, voltas2):
+    global WIN
+
+    WIN = pygame.display.get_surface()
+    if WIN is None:
+        WIN = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
+
+    clock = pygame.time.Clock()
+
+    fundo_final = pygame.image.load(os.path.join(IMG_PATH, "final-fase2.png"))
+    fundo_final = pygame.transform.scale(fundo_final, (WIDTH, HEIGHT))
+
+    vencedor_nome = nome1 if vencedor == 1 else nome2
+
+    while True:
+        clock.tick(FPS)
+        WIN.blit(fundo_final, (0, 0))
+
+        #titulo = FONT_MED.render("Resultado da Fase 2", True, WHITE)
+        #nome_vencedor = FONT_MED.render(f"Vencedor: {vencedor_nome}", True, WHITE)
+        #l1 = FONT_SMALL.render(f"{nome1}: {voltas1} voltas", True, WHITE)
+        #l2 = FONT_SMALL.render(f"{nome2}: {voltas2} voltas", True, WHITE)
+        #instrucao = FONT_SMALL.render("ENTER para continuar | ESC para reiniciar", True, YELLOW)
+
+        #WIN.blit(titulo, titulo.get_rect(center=(WIDTH // 2, 120)))
+        #WIN.blit(nome_vencedor, nome_vencedor.get_rect(center=(WIDTH // 2, 220)))
+        #WIN.blit(l1, l1.get_rect(center=(WIDTH // 2, 300)))
+        #WIN.blit(l2, l2.get_rect(center=(WIDTH // 2, 345)))
+        #WIN.blit(instrucao, instrucao.get_rect(center=(WIDTH // 2, HEIGHT - 70)))
+
+        for event in pygame.event.get():
+            check_exit(event)
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    return "continue"
+                if event.key == pygame.K_ESCAPE:
+                    return "restart"
+
+        pygame.display.update()
 
 def run_phase_2(player1_name: str, player2_name: str, car1_sprite=None, car2_sprite=None):
+    global WIN
     DEBUG_PATHS = False
 
     grass, track, red_car_img, green_car_img = load_phase2_assets(car1_sprite, car2_sprite)
 
     WIN = pygame.display.get_surface()
-    if WIN.get_size() != (WIDTH, HEIGHT):
-        WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+    if WIN is None or WIN.get_size() != (WIDTH, HEIGHT):
+        WIN = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
 
     lane_offset = 14
 
